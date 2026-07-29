@@ -1,7 +1,7 @@
 [project]
-name = "bot0-alpha"
+name = "bot0-thought-graph"
 version = "0.1.0"
-description = "LLM-powered thought generation and interview pipelines"
+description = "Reusable LLM-powered thought generation and interview pipelines"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -32,6 +32,14 @@ dependencies = [
     "pylance>=9.0.0",
     "aiofiles>=25.1.0",
 ]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["bot0_thought_graph*"]
 
 [dependency-groups]
 dev = [
