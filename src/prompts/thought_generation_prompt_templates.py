@@ -3,6 +3,7 @@
 
 # *Here: thought always represents the top level, which is "idea",
 # and sub_thought represents lower levels (idea -> thought -> sub_thought)
+# * If include example, INCLUDE {{}} in the example too!
 THOUGHT_GENERATION_PROMPT = """
 You are an expert in organizing complex topics into distinct, high-level thoughts.
 
@@ -10,8 +11,7 @@ Perform the following tasks:
 1. Analyze the given overarching theme or idea: "{idea}"
 2. Identify and break down this idea into {num_sub_thoughts} key thoughts. 
    Ensure each thought is distinct from the others and represents a significant aspect of the idea.
-3. For each thought, provide a brief description (1-2 sentences) that captures its essence and 
-   importance within the idea.
+3. For each thought, provide a brief description (1-2 sentences) that captures its essence and importance within the idea.
 
 Return your analysis in the following JSON format:
 
@@ -22,13 +22,61 @@ Return your analysis in the following JSON format:
       "thought": "Thought 1",
       "description": "Brief description of Thought 1"
     }},
-    # Additional thoughts
   ]
 }}
 
-Ensure your response is a valid JSON object with the exact structure provided above, 
-without any additional text, explanations, or markdown syntax.
+Ensure your response is a valid JSON object with the exact structure provided above, without any additional text, explanations, or markdown syntax.
 """
+
+# TODO: Improved Version; have not tested yet. It should eliminate extra "keys"
+# THOUGHT_GENERATION_PROMPT = """
+# You are an expert in organizing complex topics into distinct, high-level thoughts.
+# Perform the following tasks:
+# 1. Analyze the given overarching theme or idea: "{idea}".
+# 2. Identify and break down this idea into exactly {num_sub_thoughts} key thoughts.
+#    Ensure each thought is distinct from the others and represents a significant aspect of the idea.
+# 3. For each thought, provide a brief description (1-2 sentences) that captures its essence and importance within the idea.
+
+# Return your analysis **strictly** as a valid JSON object with the following structure:
+# {{
+#   "idea": "<The overarching idea>",
+#   "thoughts": [
+#     {{
+#       "thought": "<Thought 1>",
+#       "description": "<Brief description of Thought 1>"
+#     }},
+#     {{
+#       "thought": "<Thought 2>",
+#       "description": "<Brief description of Thought 2>"
+#     }},
+#     ...
+#   ]
+# }}
+
+
+# Rules:
+# 1. Do not include comments, placeholders, or extraneous text in your response.
+# 2. All JSON keys must be enclosed in double quotes.
+# 3. Ensure the JSON syntax is valid and free of trailing commas.
+# 4. Each thought must follow exactly the same structure with "thought" and "description" keys.
+# 5. All thoughts must be elements in the "thoughts" array - do not add extra keys outside the array.
+
+# Example output for an idea like "The future of AI":
+# {{
+#   "idea": "The future of AI",
+#   "thoughts": [
+#     {{
+#       "thought": "Advancements in Machine Learning",
+#       "description": "Machine learning models are rapidly improving, leading to more accurate and scalable AI systems."
+#     }},
+#     {{
+#       "thought": "Ethical Concerns in AI",
+#       "description": "The growing influence of AI raises important ethical issues regarding bias, transparency, and accountability."
+#     }}
+#   ]
+# }}
+# Use this format exactly, ensuring your response is valid JSON.
+# """
 
 # Need the double curly braces {{ }}
 SUB_THOUGHT_GENERATION_PROMPT = """

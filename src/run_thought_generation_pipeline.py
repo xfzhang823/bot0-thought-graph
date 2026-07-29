@@ -96,11 +96,12 @@ ideas = [
     "embedded software development",
     "embedded software development in automotive",
     "embedded software development in aerospace",
+    "future of edge computing in smart cities",
 ]
 # other ideas:
 # "RTOS (Real-Time Operating System)"
 
-outer_idea = ideas[2]
+outer_idea = ideas[3]
 logger.info(f"top-level idea/topic: {ideas}")
 
 

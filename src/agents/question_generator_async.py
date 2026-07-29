@@ -1,22 +1,20 @@
-"""
-TBA
-"""
+"""Async question generation backed by supported LLM providers."""
 
-# Dependencies
-from typing import Optional, Union, List, Dict
+import logging
+from typing import Dict, List, Optional, Union
+
+from anthropic import AsyncAnthropic
+from openai import AsyncOpenAI
 from tenacity import (
     retry,
     stop_after_attempt,
     wait_exponential,
-)  # n error handling and retry strategy library that makes API calls more robust.
-import logging
-import logging_config
+)
 
-from openai import AsyncOpenAI
-from anthropic import AsyncAnthropic
+import logging_config  # pylint: disable=unused-import
 
-from models.llm_response_models import TextResponse
 from models.evaluation_models import EvaluationCriteria
+from models.llm_response_models import TextResponse
 from utils.llm_api_utils_async import (
     call_claude_api_async,
     call_openai_api_async,
@@ -26,7 +24,6 @@ from prompts.evaluation_prompt_templates import (
     INITIAL_QUESTION_GENERATION_PROMPT,
     FOLLOWUP_QUESTION_GENERATION_PROMPT,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +102,7 @@ class QuestionGeneratorAsync:
             context=context_prompt,
         )
 
-        logger.info(f"Initial question generation prompt: {prompt}")  # Debugging
+        logger.info("Initial question generation prompt: %s", prompt)
 
         return await self.call_llm_async(prompt)
 
@@ -124,7 +121,7 @@ class QuestionGeneratorAsync:
         Generate a follow-up question based on evaluation, context, and scoped logs.
 
         Args:
-            - evaluation (EvaluationCriteria): Evaluation data (pydantic model) for the user's response.
+            - evaluation (EvaluationCriteria): Evaluation data for the user's response.
             - idea (str): The overarching idea or context.
             - thought (str): The main thought being discussed.
             - sub_thought_description (str): The sub-thought description for context.
@@ -203,7 +200,7 @@ class QuestionGeneratorAsync:
             conversation_context=conversation_context,
         )
 
-        logger.info(f"Follow-up question generation prompt: {prompt}")
+        logger.info("Follow-up question generation prompt: %s", prompt)
 
         return await self.call_llm_async(prompt=prompt)  # Returns a pydantic obj
 
@@ -255,9 +252,11 @@ class QuestionGeneratorAsync:
             else:
                 raise ValueError(f"Unsupported LLM provider: {self.llm_provider}")
 
-            logger.info(f"Response data type: {type(response_model)}\n{response_model}")
+            logger.info(
+                "Response data type: %s\n%s", type(response_model), response_model
+            )
             return response_model
 
         except Exception as e:
-            logger.error(f"Error calling LLM '{self.llm_provider}': {e}")
+            logger.error("Error calling LLM '%s': %s", self.llm_provider, e)
             raise

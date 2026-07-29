@@ -1,0 +1,42 @@
+[project]
+name = "bot0-alpha"
+version = "0.1.0"
+description = "LLM-powered thought generation and interview pipelines"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aiohttp>=3.10",
+    "anthropic>=0.39",
+    "fastapi>=0.115",
+    "gtts>=2.5",
+    "httpx>=0.27",
+    "jsonschema>=4.23",
+    "numpy>=2.0",
+    "ollama>=0.3",
+    "openai>=1.54",
+    "pandas>=2.2",
+    "pinecone>=5.3",
+    "pydantic>=2.9",
+    "python-dotenv>=1.0",
+    "pypdf2>=3.0",
+    "scikit-learn>=1.5",
+    "scipy>=1.14",
+    "sentence-transformers>=3.3",
+    "spacy>=3.8",
+    "tenacity>=9.0",
+    "torch>=2.5",
+    "transformers>=4.46",
+    "uvicorn>=0.32",
+    "youtube-transcript-api>=0.6",
+    "pylint>=4.0.6",
+    "pylance>=9.0.0",
+    "aiofiles>=25.1.0",
+]
+
+[dependency-groups]
+dev = [
+    "pylint>=4.0.6",
+    "pylint-pydantic>=0.4.1",
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+]

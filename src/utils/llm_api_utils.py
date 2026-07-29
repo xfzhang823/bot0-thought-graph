@@ -118,6 +118,9 @@ def clean_and_extract_json(
 
     except json.JSONDecodeError as e:
         logger.error(f"Failed to parse JSON: {e}")
+        logger.debug(f"Final cleaned JSON string before failure: {cleaned_json_string}")
+    except Exception as e:
+        logger.error(f"Unexpected error during JSON extraction: {e}")
         return None
 
 
