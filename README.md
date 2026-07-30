@@ -1,13 +1,97 @@
-for thellma voice detection on windows:
+# bot0-thought-graph
 
-1. windows environment c:\documents\bot0alpha /// venvwin that's running the actual vocie detection adn needs a linux server unning lama
-2. linux is this docker contanier and start it up:
-./llama-server -m models/models-bartowki-ll etc. that is permantnely installed on the docker--did not check it into git for now in /backend under root
+`bot0-thought-graph` is a standalone Python package for structured thought generation and headless interviewing. It keeps provider access and persistence behind explicit caller-supplied interfaces.
 
-./llam-aserver -m ~/.cache/huggingface/hub/models--bartowski--Llama-3.2-3B-Instruc
-t-GGUF/snapshots/5ab33fa94d1d04e903623ae72c95d1696f09f9e8/Llama-3.2-3B-Instruct-IQ3_M.gguf &
+## Capabilities
 
-it is listneing at n http://127.0.0.1:8080 
+- Horizontal and vertical thought generation.
+- Deterministic indexing, parsing, validation, and hierarchy traversal.
+- Typed interview sessions with question generation, answer evaluation, reflection, and topic-exhaustion policy.
+- Optional in-memory or caller-selected JSON persistence.
 
-don;t firget ti dibwkiad run searchvectors first. 
+## Installation
 
+```bash
+uv add bot0-thought-graph
+# Provider adapters are optional:
+uv add "bot0-thought-graph[providers]"
+```
+
+For a checkout:
+
+```bash
+uv sync
+```
+
+## Provider injection
+
+The package does not load credentials or create clients during import. Supply a provider implementation or use an adapter with an explicitly constructed SDK client:
+
+```python
+from bot0_thought_graph.providers import OpenAIProvider
+
+provider = OpenAIProvider(client=my_openai_client)
+```
+
+Tests and applications can provide any object implementing `LLMProvider`.
+
+## Thought generation
+
+```python
+from bot0_thought_graph import ThoughtGraphEngine
+from bot0_thought_graph.thought_generation import HorizontalGenerationRequest
+
+engine = ThoughtGraphEngine(provider=my_provider)
+graph = engine.generate(
+    HorizontalGenerationRequest(idea="embedded systems", model="my-model")
+)
+```
+
+Vertical expansion and indexing are available through `VerticalGenerationRequest`, `engine.expand()`, `engine.expand_all()`, and `engine.index()`.
+
+## Interviewing
+
+```python
+from bot0_thought_graph import InterviewEngine
+from bot0_thought_graph.interview import InterviewContext
+
+engine = InterviewEngine(provider=my_provider, model="my-model")
+session = engine.start(InterviewContext(idea_data=indexed_graph))
+turn = engine.process_answer(session, "The system should make requirements explicit.")
+```
+
+Sessions and turn results are typed and contain no display or transport state.
+
+## Explicit persistence
+
+No files are written by default. Persistence requires both a repository and an explicit call:
+
+```python
+from bot0_thought_graph import InterviewEngine, JsonRepository
+
+engine = InterviewEngine(
+    provider=my_provider,
+    model="my-model",
+    repository=JsonRepository(chosen_directory),
+)
+session = engine.start(context)
+engine.save_session(session)
+```
+
+## Architecture
+
+The package is organized into models, prompts, provider contracts/adapters, thought generation, interview services, thin orchestration, and optional storage. See [docs/public_api.md](docs/public_api.md) and [docs/target_architecture.md](docs/target_architecture.md).
+
+## Non-goals
+
+Frontend, FastAPI, WebSocket, voice/audio, TTS, terminal interaction, deployment, authentication, repository-root discovery, implicit provider construction, and automatic persistence are outside this package.
+
+## Development
+
+```bash
+uv run python -m compileall src
+uv run pytest
+uv build
+```
+
+Offline examples are in `examples/` and use fake providers. The migrated package is complete for its current reusable scope; legacy application modules remain in the repository for compatibility and deferred migration, but are not package dependencies.

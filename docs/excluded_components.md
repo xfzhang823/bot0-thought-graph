@@ -1,8 +1,11 @@
 # Excluded components
 
-- **Frontend:** `my-react-app/`, `index.js`, and web assets belong to an application surface.
-- **VoiceAssist:** audio, WebSocket, local Llama, vector, and socket deployment code is a separate product integration.
-- **Runtime/generated data:** `input_output/`, thought-generation outputs, session state, memory, and checked-in artifacts are not package code.
-- **Experiments:** evaluation/comparison experiments, sandboxes, demos, and manual runners require separate ownership and validation.
-- **Backup files:** `*_backup.py`, `*_SAVED.py`, and `*_GOLD.py` are historical copies, not package modules.
-- **Deployment-specific code:** legacy root services, startup scripts, FastAPI/TTS entry points, and machine-specific configuration remain application/deployment concerns.
+- **Frontend:** `my-react-app/`, `index.js`, and web assets remain application code and are not imported by the package.
+- **VoiceAssist:** `VoiceAssist/` remains a separate voice/audio, WebSocket, local-Llama, vector, and deployment integration.
+- **Runtime/generated data:** `input_output/`, thought-generation outputs, session state, memory, and checked-in artifacts remain data/application fixtures, not package code.
+- **Experiments:** evaluation/comparison scripts, sandboxes, demos, and manual runners remain unvalidated experiments.
+- **Backup files:** `*_backup.py`, `*_SAVED.py`, and `*_GOLD.py` remain historical copies.
+- **Deployment-specific code:** root services, FastAPI/TTS entry points, startup scripts, authentication, terminal loops, and machine-specific configuration remain application concerns.
+- **Deferred reusable legacy code:** `src/agents/` except the topic-exhaustion compatibility shim, `src/pipelines/`, `src/utils/`, `src/project_config.py`, and legacy interview services remain untouched because they still combine application behavior, provider construction, or filesystem assumptions.
+
+No excluded surface is imported by `src/bot0_thought_graph/`. No broad deletion is performed in this finalization pass.

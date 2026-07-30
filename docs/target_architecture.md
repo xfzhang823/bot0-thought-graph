@@ -13,7 +13,7 @@
 
 ## Included components
 
-The package boundary includes thought and interview domain models, prompts, provider integration boundaries, thought-generation services, interview services, orchestration, and storage interfaces.
+The package boundary includes thought and interview domain models, prompts, provider integration boundaries, thought-generation services, interview services, thin orchestration, and optional storage implementations. Public behavior is provider-injected and headless.
 
 ## Excluded components
 
@@ -32,4 +32,4 @@ src/bot0_thought_graph/
     storage/
 ```
 
-The current implementation remains in place until later migration prompts move individual components into this boundary.
+Legacy agents, pipelines, utilities, services, and application assets remain in the repository only where compatibility or deferred migration requires them. They are not package dependencies.

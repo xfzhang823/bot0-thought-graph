@@ -1,6 +1,7 @@
-"""Provider-neutral contracts and explicit SDK adapters."""
+"""Provider-neutral contracts with lazy SDK adapter exports."""
 
-from .anthropic import AnthropicProvider, AsyncAnthropicProvider
+from importlib import import_module
+
 from .contracts import (
     AsyncLLMProvider,
     GenerationRequest,
@@ -10,7 +11,22 @@ from .contracts import (
     ProviderRequestError,
     ProviderResponseError,
 )
-from .openai import AsyncOpenAIProvider, OpenAIProvider
+
+_LAZY_ADAPTERS = {
+    "AnthropicProvider": (".anthropic", "AnthropicProvider"),
+    "AsyncAnthropicProvider": (".anthropic", "AsyncAnthropicProvider"),
+    "AsyncOpenAIProvider": (".openai", "AsyncOpenAIProvider"),
+    "OpenAIProvider": (".openai", "OpenAIProvider"),
+}
+
+
+def __getattr__(name: str):
+    if name not in _LAZY_ADAPTERS:
+        raise AttributeError(name)
+    module_name, attribute = _LAZY_ADAPTERS[name]
+    value = getattr(import_module(module_name, __name__), attribute)
+    globals()[name] = value
+    return value
 
 __all__ = [
     "AnthropicProvider", "AsyncAnthropicProvider", "AsyncLLMProvider",

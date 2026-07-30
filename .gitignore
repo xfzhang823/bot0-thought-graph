@@ -24,6 +24,13 @@ VoiceAssist/venvwin/
 
 # production
 /build
+/dist/
+*.egg-info/
+/coverage.xml
+/.coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 !/rasa/myenv
 
@@ -75,6 +82,15 @@ backend/src/testing.py
 
 # Ignore api key file
 .env
+
+# Runtime/generated package data
+input_output/
+thought_generation/*_output/
+logs/
+
+# Platform-specific accidental paths
+C:/github/
+src/C:/
 
 # Ignore __pycache__ directory
 __pycache__/

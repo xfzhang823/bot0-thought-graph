@@ -5,13 +5,9 @@ import pytest
 
 from bot0_thought_graph.config import Bot0Config, ProviderConfig
 from bot0_thought_graph.providers import (
-    AnthropicProvider,
-    AsyncAnthropicProvider,
-    AsyncOpenAIProvider,
     GenerationRequest,
     GenerationResult,
     LLMProvider,
-    OpenAIProvider,
     ProviderRequestError,
     ProviderResponseError,
 )
@@ -49,6 +45,7 @@ def request():
 
 
 def test_provider_contract_and_openai_adapter_without_network():
+    OpenAIProvider = pytest.importorskip("bot0_thought_graph.providers.openai").OpenAIProvider
     completions = FakeCompletions(SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="answer"))]))
     provider = OpenAIProvider(client=SimpleNamespace(chat=SimpleNamespace(completions=completions)))
     assert isinstance(provider, LLMProvider)
@@ -59,6 +56,7 @@ def test_provider_contract_and_openai_adapter_without_network():
 
 
 def test_anthropic_adapter_and_malformed_responses():
+    AnthropicProvider = pytest.importorskip("bot0_thought_graph.providers.anthropic").AnthropicProvider
     messages = FakeMessages(SimpleNamespace(content=[SimpleNamespace(text="answer")]))
     provider = AnthropicProvider(client=SimpleNamespace(messages=messages))
     assert provider.generate(request()).text == "answer"
@@ -71,6 +69,8 @@ def test_anthropic_adapter_and_malformed_responses():
 
 
 def test_provider_exception_translation_and_no_import_time_clients():
+    OpenAIProvider = pytest.importorskip("bot0_thought_graph.providers.openai").OpenAIProvider
+    AnthropicProvider = pytest.importorskip("bot0_thought_graph.providers.anthropic").AnthropicProvider
     failing_openai = OpenAIProvider(
         client=SimpleNamespace(chat=SimpleNamespace(completions=FakeCompletions(error=RuntimeError("offline"))))
     )
@@ -84,6 +84,8 @@ def test_provider_exception_translation_and_no_import_time_clients():
 
 @pytest.mark.asyncio
 async def test_async_adapters_use_injected_clients():
+    AsyncOpenAIProvider = pytest.importorskip("bot0_thought_graph.providers.openai").AsyncOpenAIProvider
+    AsyncAnthropicProvider = pytest.importorskip("bot0_thought_graph.providers.anthropic").AsyncAnthropicProvider
     class AsyncCompletions(FakeCompletions):
         async def create(self, **kwargs):
             return super().create(**kwargs)
