@@ -11,6 +11,8 @@
 
 ## Installation
 
+Requires Python 3.12 or newer. This project is pre-1.0: the documented core API is intended for reuse, but minor releases may still refine interfaces before 1.0.
+
 ```bash
 uv add bot0-thought-graph
 # Provider adapters are optional:
@@ -85,6 +87,8 @@ The package is organized into models, prompts, provider contracts/adapters, thou
 ## Non-goals
 
 Frontend, FastAPI, WebSocket, voice/audio, TTS, terminal interaction, deployment, authentication, repository-root discovery, implicit provider construction, and automatic persistence are outside this package.
+
+`VoiceAssist/` is retained as legacy/reference application code. It is excluded from the distributable package and is not supported as part of `bot0-thought-graph`. Future voice work belongs in separate projects such as `voice-tools` and `bot0-voice-assistant`.
 
 ## Development
 
