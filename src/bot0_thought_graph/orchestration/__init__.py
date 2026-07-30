@@ -1,1 +1,6 @@
-"""Workflow orchestration for the Bot0 thought graph package."""
+"""Thin reusable interview coordination."""
+
+from .coordinator import InterviewCoordinator
+from .policies import InterviewPolicy
+
+__all__ = ["InterviewCoordinator", "InterviewPolicy"]
