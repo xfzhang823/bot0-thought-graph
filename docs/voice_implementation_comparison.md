@@ -2,17 +2,17 @@
 
 ## 1. Executive conclusion
 
-**Recommendation: Option D.** Use the separate `/home/xzhang/voice-tools` package as the canonical speech-input base, then harden it before wider adoption. Extract only VoiceAssist's useful browser/WebSocket transport and voice-session policies into a future `bot0-voice-assistant` application. Do not use VoiceAssist as the speech-core base.
+**Recommendation: Option D.** Use the separate `voice-tools` package, now housed in `/home/xzhang/dev/voice-assist`, as the canonical speech-input base, then harden it before wider adoption. Keep the extracted VoiceAssist prototype isolated in that repository and migrate only useful browser/WebSocket transport and voice-session policies into a future `bot0-voice-assistant` application. Do not use VoiceAssist as the speech-core base.
 
 `voice-tools` is already an installable `src`-layout package with a small Python API, CLI, declared dependencies, temporary-file cleanup, domain-specific errors, and five hardware/network-independent tests. VoiceAssist is a coupled vehicle-manual assistant prototype: its active transcription path uses Google Speech Recognition, writes `debug_audio.wav`, loads local pickles and a sentence-transformer model, calls an LLM, and invokes TTS from one service class.
 
-AgenticAICompass does **not** currently contain or import speech code. Its checked-in `pyproject.toml`, `requirements.txt`, and `uv.lock` do not declare `voice-tools`. Its local virtual environment has an editable installation pointing to `/home/xzhang/voice-tools`, but that machine-local link is not reproducible application integration.
+AgenticAICompass does **not** currently contain or import speech code. Its checked-in `pyproject.toml`, `requirements.txt`, and `uv.lock` do not declare `voice-tools`. Its local virtual environment previously had an editable installation pointing to `/home/xzhang/voice-tools`; the reusable project is now housed at `/home/xzhang/dev/voice-assist`, and a machine-local editable link is not reproducible application integration.
 
 `voice-tools` is the better base, not yet a complete cross-platform canonical layer. Its only public operation is a blocking WSLg/PulseAudio-to-OpenAI flow. It still needs separate capture/transcription contracts, `transcribe_file`, explicit client/configuration injection, and platform adapters.
 
 ## 2. Repository and component inventory
 
-### bot0-thought-graph-clean/VoiceAssist
+### Extracted VoiceAssist prototype
 
 | Area | Classification | Evidence and responsibility |
 | --- | --- | --- |
@@ -35,8 +35,8 @@ There is no `VoiceAssist/__init__.py`, `pyproject.toml`, setup configuration, pa
 | Area | Classification | Evidence and responsibility |
 | --- | --- | --- |
 | AgenticAICompass checked-in source | Application with no speech integration | No `voice_tools`/`voice-tools` imports, dependency, transcription route, microphone client, or speech test was found. `frontend/next.config.ts` and `api/main.py` explicitly set microphone permissions to disabled. |
-| AgenticAICompass `.venv` | Local-machine integration only | `__editable__.voice_tools-0.1.0.pth` points to `/home/xzhang/voice-tools/src`; `direct_url.json` records `file:///home/xzhang/voice-tools`; `.venv/bin/voice-to-text` exposes the package CLI. |
-| `/home/xzhang/voice-tools/pyproject.toml` | Reusable package metadata | Defines project `voice-tools`, Python `>=3.10`, `src` discovery, dependencies, pytest group, and `voice-to-text` entry point. |
+| AgenticAICompass `.venv` | Local-machine integration only | The historical `__editable__.voice_tools-0.1.0.pth` pointed to `/home/xzhang/voice-tools`; `.venv/bin/voice-to-text` exposed the package CLI. |
+| `/home/xzhang/dev/voice-assist/pyproject.toml` | Reusable package metadata | Defines project `voice-tools`, Python `>=3.10`, `src` discovery, dependencies, pytest group, and `voice-to-text` entry point. |
 | `src/voice_tools/speech.py` | Reusable but coupled speech input | Records through `parecord`, verifies a temporary WAV, calls OpenAI `whisper-1`, translates provider errors, returns text, and removes the WAV. |
 | `src/voice_tools/cli.py` | CLI adapter | Calls `transcribe_from_microphone`, writes status/errors to stderr and transcript to stdout. |
 | `src/voice_tools/__init__.py` | Public Python API | Exports only `transcribe_from_microphone`. |
@@ -88,7 +88,7 @@ There is no checked-in runtime flow. The local editable install makes `voice-to-
 
 ## 4. Capability comparison
 
-“AgenticAICompass / voice-tools” below evaluates the discovered `/home/xzhang/voice-tools` package and notes where AgenticAICompass integration is absent.
+“AgenticAICompass / voice-tools” below evaluates the discovered `/home/xzhang/dev/voice-assist` package and notes where AgenticAICompass integration is absent.
 
 | Capability | VoiceAssist | AgenticAICompass / voice-tools |
 | --- | --- | --- |
@@ -132,7 +132,7 @@ VoiceAssist's browser capture is the most platform-neutral capture concept, but 
 
 VoiceAssist reads `config.ini` from the current directory, mutates `OPENAI_API_KEY`, prints the credential, hard-codes local service URLs and models, and reads/writes fixed relative filenames. Loading `SentenceTransformer("mixedbread-ai/mxbai-embed-large-v1")` can trigger an implicit model download. No tracked API key was found, but the credential-printing behavior is unsafe.
 
-`voice-tools` does not read configuration at import time. Each public call loads `ENV_PATH`, computed from the source package location, and then reads `OPENAI_API_KEY`. That is predictable in the editable source checkout but is a poor installed-package contract: a wheel installation would look for `.env` relative to installed package files. An ignored `/home/xzhang/voice-tools/.env` exists; its contents were not inspected. Audio is created only under `TemporaryDirectory` and explicitly removed.
+`voice-tools` does not read configuration at import time. Each public call loads `ENV_PATH`, computed from the source package location, and then reads `OPENAI_API_KEY`. That is predictable in the editable source checkout but is a poor installed-package contract: a wheel installation would look for `.env` relative to installed package files. An ignored `.env` exists in the local `voice-assist` checkout; its contents were not inspected. Audio is created only under `TemporaryDirectory` and explicitly removed.
 
 ### API design
 
@@ -248,7 +248,7 @@ AgenticAICompass should declare a released version or pinned Git revision of `vo
 
 Choose **extract reusable pieces first, then archive the remainder**.
 
-Retain `VoiceAssist/` temporarily until the browser PCM protocol, buffering behavior, wake-word policy, TTS behavior, and useful audio fixtures are classified and covered by replacement tests. Then move the remaining prototype under `legacy/` in a separate `bot0-voice-assistant` repository or preserve it as an archival branch there.
+The prototype has been extracted to `voice-assist/prototypes/legacy_voice_assist/`. Keep it isolated until the browser PCM protocol, buffering behavior, wake-word policy, TTS behavior, and useful audio fixtures are classified and covered by replacement tests. Future migration belongs in a separate `bot0-voice-assistant` application repository.
 
 The future repository should be named `bot0-voice-assistant`. It should consume `voice-tools` and may optionally consume `bot0-thought-graph`; it should own WebSockets, UI, session orchestration, wake words, retrieval, LLM interactions, and TTS. It should not own a second Whisper implementation.
 
@@ -256,11 +256,11 @@ The future repository should be named `bot0-voice-assistant`. It should consume 
 
 | Phase | Scope and repository | Expected result | Main risk | Validation |
 | --- | --- | --- | --- | --- |
-| 1. Establish canonical API | `/home/xzhang/voice-tools`: separate capture from transcription; add typed audio/transcript models, `transcribe_file`, injected backend/client/config. | Headless, testable speech core with current OpenAI behavior preserved. | Breaking the existing no-argument API/CLI. | Compatibility test, wheel install/import, no import-time client/env access, offline unit tests. |
+| 1. Establish canonical API | `/home/xzhang/dev/voice-assist`: separate capture from transcription; add typed audio/transcript models, `transcribe_file`, injected backend/client/config. | Headless, testable speech core with current OpenAI behavior preserved. | Breaking the existing no-argument API/CLI. | Compatibility test, wheel install/import, no import-time client/env access, offline unit tests. |
 | 2. Add portability boundaries | `voice-tools`: make Pulse capture and OpenAI optional adapters; document WSLg; add platform capability errors and adapter contracts. | Honest platform support and lightweight custom/file-only installs. | Native audio behavior differs by OS and device. | CI without audio hardware, mocked adapter matrix, one manual smoke test per claimed platform. |
 | 3. Integrate AgenticAICompass | AgenticAICompass: add a pinned dependency and an application service consuming the public API; remove reliance on `.venv` editable path. | Reproducible installation and one owned consumption path. | Blocking microphone API in async/web runtime. | Clean-environment install, fake-backend application test, no API/network in tests. |
 | 4. Extract VoiceAssist integrations | New `bot0-voice-assistant`: extract browser/WebSocket protocol, session/wake-word policy, and optionally TTS/playback adapters. | Standalone assistant application consuming `voice-tools`. | Preserving undocumented PCM/buffer semantics and browser compatibility. | Recorded PCM fixtures, WebSocket contract tests, disconnect/cancellation tests, no retrieval/LLM dependency in transport tests. |
-| 5. Archive prototype | bot0-thought-graph and `bot0-voice-assistant`: classify fixtures, move remaining VoiceAssist prototype to documented legacy/archive location. | Thought-graph repo has no voice application; no unique behavior is lost. | Deleting the only example of an edge behavior. | Traceability checklist from this report, replacement tests, file-by-file disposition review. |
+| 5. Archive prototype | `voice-assist` and `bot0-voice-assistant`: classify fixtures and migrate the documented legacy prototype incrementally. | Thought-graph repo has no voice application; no unique behavior is lost. | Deleting the only example of an edge behavior. | Traceability checklist from this report, replacement tests, file-by-file disposition review. |
 
 ## 13. Risks and unresolved questions
 
@@ -272,14 +272,14 @@ The future repository should be named `bot0-voice-assistant`. It should consume 
 - How should cancellation work in services? `input()` is acceptable for CLI use but not library/application use.
 - Which VoiceAssist recordings are legitimate redistributable test fixtures? Their provenance and sensitivity were not established.
 - The active VoiceAssist server assumes raw mono 16 kHz PCM but does not negotiate or validate protocol metadata.
-- The separate `/home/xzhang/voice-tools` worktree had a pre-existing modified `uv.lock` during this audit; package source and lock consistency should be checked before release.
+- The `/home/xzhang/dev/voice-assist` worktree retains a pre-existing modified `uv.lock`; package source and lock consistency should be checked before release.
 - No tracked secret was found. VoiceAssist can print configured API keys, and an ignored `voice-tools/.env` exists; secret contents were intentionally not inspected.
 
 ## 14. Final recommendation
 
 **Which implementation should be the canonical reusable speech layer?**
 
-`/home/xzhang/voice-tools`, after the Phase 1 boundary hardening. It already has the correct repository/package direction and is substantially more reusable and testable than VoiceAssist.
+`/home/xzhang/dev/voice-assist`, after the Phase 1 boundary hardening. It already has the correct repository/package direction and is substantially more reusable and testable than VoiceAssist.
 
 **What valuable functionality, if any, should be extracted from the other implementation?**
 
@@ -291,7 +291,7 @@ Yes, conservatively: create `bot0-voice-assistant`, extract and test the useful 
 
 **How should AgenticAICompass consume the canonical voice implementation?**
 
-Through a declared, pinned `voice-tools` package dependency and its public injected API. Remove reliance on `/home/xzhang/voice-tools` editable installation and add fake-backend integration tests.
+Through a declared, pinned `voice-tools` package dependency and its public injected API. Remove reliance on local editable installations and add fake-backend integration tests.
 
 **Should the standalone voice assistant contain its own Whisper implementation?**
 

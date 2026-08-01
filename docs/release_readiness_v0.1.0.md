@@ -21,7 +21,7 @@ The only changes made during this audit are release-hygiene documentation update
 
 Source inspection and `tests/test_package_hygiene.py` found no imports or path assumptions involving VoiceAssist, frontend code, deployment code, AgenticAICompass, repository-root discovery, or legacy application modules. The package does not load dotenv configuration, construct a provider, access a network, read application data, or persist files at import time. Persistence is available only through an explicitly supplied repository and explicit save calls.
 
-The repository still contains legacy source, frontend assets, runtime data, and VoiceAssist files by design. Setuptools discovery is restricted to `bot0_thought_graph*`, so those materials are not part of the wheel.
+The repository still contains legacy source, frontend assets, and runtime data by design. The former VoiceAssist prototype is maintained separately in `voice-assist`. Setuptools discovery is restricted to `bot0_thought_graph*`, so those materials are not part of the wheel.
 
 ## Public API findings
 
@@ -85,7 +85,7 @@ The README and architecture/API documents describe the package purpose, installa
 
 ## Legacy and VoiceAssist status
 
-VoiceAssist remains in place as legacy/reference application code and was not moved, deleted, or modified. It is excluded from the distributable package and is not supported as part of `bot0-thought-graph`. Future voice work is directed to separate projects such as `voice-tools` and `bot0-voice-assistant`. Frontend, deployment, runtime data, and other legacy application files are likewise retained outside the package boundary.
+The former VoiceAssist prototype has since been extracted to the separate `voice-assist` repository. It is excluded from the distributable package and is not supported as part of `bot0-thought-graph`. Future voice work is directed to separate projects such as `voice-tools` and `bot0-voice-assistant`. Frontend, deployment, runtime data, and other legacy application files remain outside the package boundary.
 
 ## Issue classification
 
@@ -105,7 +105,7 @@ None remaining after the documentation corrections in this audit.
 
 ### LEGACY / OUT OF SCOPE
 
-- Legacy application tests and modules, frontend, deployment code, runtime data, and VoiceAssist assets.
+- Legacy application tests and modules, frontend, deployment code, and runtime data. The extracted VoiceAssist assets are maintained in the separate `voice-assist` repository.
 - Voice work and any integration with `voice-tools`, `bot0-voice-assistant`, or AgenticAICompass.
 - Refactoring thought-generation/interview engines or broadening the public API.
 

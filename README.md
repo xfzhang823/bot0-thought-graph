@@ -88,7 +88,7 @@ The package is organized into models, prompts, provider contracts/adapters, thou
 
 Frontend, FastAPI, WebSocket, voice/audio, TTS, terminal interaction, deployment, authentication, repository-root discovery, implicit provider construction, and automatic persistence are outside this package.
 
-`VoiceAssist/` is retained as legacy/reference application code. It is excluded from the distributable package and is not supported as part of `bot0-thought-graph`. Future voice work belongs in separate projects such as `voice-tools` and `bot0-voice-assistant`.
+The former `VoiceAssist/` prototype was extracted to the separate `voice-assist` repository. It is not part of this package and is not supported as part of `bot0-thought-graph`. Future voice work belongs in separate projects such as `voice-tools` and `bot0-voice-assistant`.
 
 ## Development
 

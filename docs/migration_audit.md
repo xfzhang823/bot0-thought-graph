@@ -14,13 +14,13 @@
 
 ## Retained legacy surfaces
 
-Legacy agents, pipelines, utilities, project configuration, root services, generated data, frontend, VoiceAssist, experiments, backups, and binaries remain outside the package. They are retained because they are application/deployment code, historical artifacts, or deferred behavior with unresolved coupling. The legacy topic-exhaustion module is now a compatibility shim to the package policy.
+Legacy agents, pipelines, utilities, project configuration, root services, generated data, frontend, experiments, backups, and binaries remain outside the package. The former VoiceAssist prototype was extracted to the separate `voice-assist` repository. These surfaces are application/deployment code or deferred behavior with unresolved coupling. The legacy topic-exhaustion module is now a compatibility shim to the package policy.
 
 ## Remaining technical debt
 
 - The legacy test suite still contains application-specific tests with path mutation and hard-coded Windows fixtures; those are not package tests.
 - Migrated Pydantic models emit existing class-based `Config` deprecation warnings.
-- The repository still tracks historical generated data and large VoiceAssist assets; they are excluded from installation and now covered by hygiene documentation/ignore rules, but were not mass-deleted.
+- Historical generated data remains in this repository where previously tracked; VoiceAssist assets now live in the separate `voice-assist` repository and are outside this package.
 - Provider adapters require the optional `providers` extra; custom/fake providers require no SDK adapter import.
 
 ## Readiness
