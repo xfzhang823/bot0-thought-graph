@@ -1,4 +1,4 @@
-"""Deterministic models for unindexed thought graphs."""
+"""Deterministic models for thought graphs and generated thought data."""
 
 import logging
 from typing import Any, Dict, List, Optional, Union
@@ -6,6 +6,38 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field, ValidationError
 
 logger = logging.getLogger(__name__)
+
+
+class Thought(BaseModel):
+    """A named conceptual thought returned by the concept-first API."""
+
+    name: str = Field(..., min_length=1)
+    description: Optional[str] = None
+
+
+class ThoughtArray(BaseModel):
+    """One horizontal expansion of a concept."""
+
+    concept: str = Field(..., min_length=1)
+    thoughts: List[Thought] = Field(default_factory=list)
+
+
+class ThoughtNode(Thought):
+    """A thought with zero or more vertically expanded child thoughts."""
+
+    children: List["ThoughtNode"] = Field(default_factory=list)
+
+
+class ThoughtGraph(BaseModel):
+    """A bounded hierarchy rooted at the requested concept."""
+
+    concept: str = Field(..., min_length=1)
+    root: ThoughtNode
+    depth: int = Field(..., ge=1)
+    breadth: int = Field(..., ge=1)
+
+
+ThoughtNode.model_rebuild()
 
 
 class SubThoughtJSONModel(BaseModel):

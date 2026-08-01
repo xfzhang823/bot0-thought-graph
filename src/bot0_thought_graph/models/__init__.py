@@ -13,6 +13,10 @@ from .thought_models import (
     IdeaClusterJSONModel,
     IdeaJSONModel,
     SubThoughtJSONModel,
+    Thought,
+    ThoughtArray,
+    ThoughtGraph,
+    ThoughtNode,
     ThoughtJSONModel,
     validate_thought_batch,
 )
@@ -22,5 +26,6 @@ __all__ = [
     "EvaluationJSONModel", "IdeaClusterJSONModel", "IdeaJSONModel",
     "IndexedIdeaJSONModel", "IndexedSubThoughtJSONModel", "IndexedThoughtJSONModel",
     "JSONResponse", "QuestionAnswerPair", "SubConcept", "SubThoughtJSONModel",
-    "TabularResponse", "TextResponse", "ThoughtJSONModel", "validate_thought_batch",
+    "TabularResponse", "TextResponse", "Thought", "ThoughtArray", "ThoughtGraph",
+    "ThoughtJSONModel", "ThoughtNode", "validate_thought_batch",
 ]

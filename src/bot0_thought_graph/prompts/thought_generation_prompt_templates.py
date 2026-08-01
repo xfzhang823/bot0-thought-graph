@@ -239,6 +239,44 @@ IMPORTANT: Ensure your response is a valid JSON object with the exact structure 
 without any additional text, comments, explanations, or markdown syntax.
 """
 
+
+CONCEPT_SUBTOPIC_GENERATION_PROMPT = """
+You are an expert at decomposing a concept into a horizontal set of major subtopics.
+
+For the concept "{idea}", identify exactly {num_sub_thoughts} distinct major dimensions.
+The items must be sibling-level areas with similar abstraction, broad coverage, and minimal overlap.
+Do not produce implementation steps, actions, examples, or details that belong under one subtopic.
+
+Return only valid JSON in this shape:
+{{
+  "idea": "{idea}",
+  "thoughts": [
+    {{"thought": "Major subtopic", "description": "What this dimension covers."}}
+  ]
+}}
+"""
+
+
+CONCEPT_DETAIL_GENERATION_PROMPT = """
+You are an expert at vertically expanding one subtopic within a larger concept.
+
+Concept: "{idea}"
+Parent subtopic: "{thought}"
+
+Identify exactly {num_sub_thoughts} direct child details of the parent subtopic.
+Each child must be more specific than the parent, remain within the concept, use consistent granularity,
+and avoid repeating the parent or introducing unrelated sibling-level dimensions.
+
+Return only valid JSON in this shape:
+{{
+  "idea": "{idea}",
+  "thought": "{thought}",
+  "sub_thoughts": [
+    {{"name": "Direct child detail", "description": "What this child covers."}}
+  ]
+}}
+"""
+
 SIMPLE_TO_COMPLEX_SUB_THOUGHT_GENERATION_PROMPT = """
 You are an expert in explaining complex topics in a structured, step-by-step manner.
 

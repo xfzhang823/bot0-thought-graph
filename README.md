@@ -25,31 +25,57 @@ For a checkout:
 uv sync
 ```
 
-## Provider injection
+## Concept-first usage
 
-The package does not load credentials or create clients during import. Supply a provider implementation or use an adapter with an explicitly constructed SDK client:
+The simplest workflow starts with a concept. `ThoughtGraphEngine` performs horizontal expansion into sibling-level subtopics, vertical expansion into direct children, and bounded graph construction. Supply a provider implementation or use an adapter with an explicitly constructed SDK client:
 
 ```python
 from bot0_thought_graph.providers import OpenAIProvider
 
 provider = OpenAIProvider(client=my_openai_client)
+engine = ThoughtGraphEngine(provider, model="your-model")
 ```
 
-Tests and applications can provide any object implementing `LLMProvider`.
-
-## Thought generation
+Tests and applications can provide any object implementing `LLMProvider`. With a fake or configured provider:
 
 ```python
 from bot0_thought_graph import ThoughtGraphEngine
-from bot0_thought_graph.thought_generation import HorizontalGenerationRequest
 
-engine = ThoughtGraphEngine(provider=my_provider)
-graph = engine.generate(
-    HorizontalGenerationRequest(idea="embedded systems", model="my-model")
+engine = ThoughtGraphEngine(provider, model="your-model")
+subtopics = engine.generate_subtopics("Clinical research recruitment")
+details = engine.expand_subtopic(
+    concept="Clinical research recruitment",
+    subtopic="Participant eligibility",
+)
+thought_array = engine.generate_array_of_thoughts("Clinical research recruitment")
+graph = engine.generate_thought_graph(
+    "Clinical research recruitment",
+    depth=2,
+    breadth=6,
 )
 ```
 
-Vertical expansion and indexing are available through `VerticalGenerationRequest`, `engine.expand()`, `engine.expand_all()`, and `engine.index()`.
+`generate_subtopics()` and `generate_array_of_thoughts()` perform horizontal expansion: they return distinct major dimensions at a similar level of abstraction. `expand_subtopic()` performs one-level vertical expansion: it returns more-specific direct children of one selected subtopic. The convenience list methods return `list[str]`; structured methods return `ThoughtArray` and `ThoughtGraph`.
+
+Graph `depth=1` returns the root concept and its first-level subtopics. `depth=2` adds one vertical expansion under each first-level subtopic. The façade bounds depth at three child levels, caps children at `breadth`, and makes one provider call per expanded node. These methods do not persist results.
+
+## Advanced typed usage
+
+The request-based API remains available when callers need explicit generation controls:
+
+```python
+from bot0_thought_graph.thought_generation import HorizontalGenerationRequest
+
+result = engine.generate(
+    HorizontalGenerationRequest(
+        idea="embedded systems",
+        model="your-model",
+        num_thoughts=10,
+    )
+)
+```
+
+Vertical expansion and indexing remain available through `VerticalGenerationRequest`, `engine.expand()`, `engine.expand_all()`, and `engine.index()`.
 
 ## Interviewing
 

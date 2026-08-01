@@ -16,9 +16,10 @@ def generate_horizontal(
     temperature: float = 0.7,
     max_tokens: int = 1056,
     timeout: float | None = None,
-    prompt_template: str = THOUGHT_GENERATION_PROMPT,
+    prompt_template: str | None = None,
 ) -> IdeaJSONModel:
     """Generate and validate high-level thoughts using an injected provider."""
+    prompt_template = prompt_template or THOUGHT_GENERATION_PROMPT
     prompt = prompt_template.format(idea=idea, num_sub_thoughts=num_thoughts)
     result = provider.generate(
         GenerationRequest(

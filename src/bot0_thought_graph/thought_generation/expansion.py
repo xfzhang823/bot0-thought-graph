@@ -18,9 +18,11 @@ def expand_vertical(
     temperature: float = 0.7,
     max_tokens: int = 1056,
     timeout: float | None = None,
+    prompt_template: str | None = None,
 ) -> ThoughtJSONModel:
     """Generate and validate sub-thoughts for one high-level thought."""
-    prompt = VERTICAL_SUB_THOUGHT_GENERATION_PROMPT.format(
+    prompt_template = prompt_template or VERTICAL_SUB_THOUGHT_GENERATION_PROMPT
+    prompt = prompt_template.format(
         thought=thought,
         num_sub_thoughts=num_sub_thoughts,
         progression_type=progression_type,
