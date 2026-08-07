@@ -1,28 +1,15 @@
-"""Offline behavioral test for the concept-first thought-generation façade."""
+"""Live smoke test for the concept-first thought-generation façade."""
 
 from __future__ import annotations
 
-import json
-from pprint import pprint
+import os
 
 from bot0_thought_graph import ThoughtGraphEngine
-
-try:
-    from examples.support import FakeProvider
-except ModuleNotFoundError:  # Supports direct execution from the repository root.
-    from support import FakeProvider
+from bot0_thought_graph.providers import OpenAIProvider
 
 
-HORIZONTAL = (
-    '{"idea":"systems","thoughts":['
-    '{"thought":"hardware","description":"Physical design"},'
-    '{"thought":"software","description":"Program logic"}]}'
-)
-VERTICAL = (
-    '{"idea":"systems","thought":"hardware","sub_thoughts":['
-    '{"name":"requirements","description":"Define needs"},'
-    '{"name":"design","description":"Choose structure"}]}'
-)
+CONCEPT = "Clinical research recruitment"
+MODEL = os.getenv("OPENAI_MODEL", "gpt-5-mini-2025-08-07")
 
 
 def print_section(title: str) -> None:
@@ -32,46 +19,54 @@ def print_section(title: str) -> None:
     print("=" * 80)
 
 
-def print_graph(node, indent: int = 0) -> None:
-    prefix = "  " * indent
-    print(f"{prefix}- {node.name}")
+def choose_vertical_parent(subtopics: list[str]) -> str:
+    """Pick a direct-child parent deterministically without another model call."""
+    if "Participant eligibility" in subtopics:
+        return "Participant eligibility"
 
-    if node.description:
-        print(f"{prefix}  Description: {node.description}")
+    ordered_keywords = (
+        "eligibility",
+        "participant",
+        "screening",
+        "recruitment",
+        "enrollment",
+        "consent",
+    )
+    lowered = [item.lower() for item in subtopics]
+    for keyword in ordered_keywords:
+        for original, normalized in zip(subtopics, lowered, strict=True):
+            if keyword in normalized:
+                return original
 
-    for child in node.children:
-        print_graph(child, indent + 1)
+    return subtopics[0]
 
 
 def main() -> None:
-    # One response is needed for each operation below. The final two vertical
-    # responses are consumed while expanding the two first-level graph nodes.
-    provider = FakeProvider([HORIZONTAL, VERTICAL, HORIZONTAL, HORIZONTAL, VERTICAL, VERTICAL])
-    engine = ThoughtGraphEngine(provider, model="example-model")
-    concept = "systems"
+    provider = OpenAIProvider()
+    engine = ThoughtGraphEngine(provider, model=MODEL)
 
-    print_section("1. HORIZONTAL EXPANSION")
-    subtopics = engine.generate_subtopics(concept, max_subtopics=2)
-    pprint(subtopics)
+    print_section("HORIZONTAL RESULT")
+    print(f"Concept: {CONCEPT}")
+    print(f"Model: {MODEL}")
 
-    print_section("2. VERTICAL EXPANSION")
-    selected_subtopic = subtopics[0]
-    details = engine.expand_subtopic(
-        concept=concept,
-        subtopic=selected_subtopic,
-        max_details=2,
+    array = engine.generate_array_of_thoughts(CONCEPT, max_subtopics=6)
+    for index, thought in enumerate(array.thoughts, start=1):
+        print(f"{index}. {thought.name}")
+        print(f"   Description: {thought.description}")
+
+    selected_parent = choose_vertical_parent([thought.name for thought in array.thoughts])
+
+    print_section("VERTICAL DIRECT-CHILD RESULT")
+    print(f"Concept: {CONCEPT}")
+    print(f"Selected parent: {selected_parent}")
+
+    children = engine.expand_subtopic(
+        concept=CONCEPT,
+        subtopic=selected_parent,
+        max_details=6,
     )
-    print(f"Parent: {selected_subtopic}")
-    pprint(details)
-
-    print_section("3. STRUCTURED THOUGHT ARRAY")
-    thought_array = engine.generate_array_of_thoughts(concept, max_subtopics=2)
-    print(thought_array.model_dump_json(indent=2))
-
-    print_section("4. DEPTH-2 THOUGHT GRAPH")
-    graph = engine.generate_thought_graph(concept, depth=2, breadth=2)
-    print_graph(graph.root)
-    print(json.dumps(graph.model_dump(), indent=2))
+    for index, child in enumerate(children, start=1):
+        print(f"{index}. {child}")
 
 
 if __name__ == "__main__":
