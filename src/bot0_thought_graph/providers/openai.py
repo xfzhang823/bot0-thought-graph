@@ -1,6 +1,4 @@
-"""OpenAI adapters; SDK-specific types remain inside this module."""
-
-from typing import Any
+"""OpenAI provider adapters built on the official SDK."""
 
 from openai import AsyncOpenAI, OpenAI
 
@@ -12,42 +10,33 @@ from .contracts import (
     ProviderRequestError,
     ProviderResponseError,
 )
+from .openai_compatible import (
+    OpenAICompatibleSpec,
+    build_async_client,
+    build_chat_completion_kwargs,
+    build_sync_client,
+    parse_chat_completion_response,
+)
 
-
-def _extract_text(response: Any) -> str:
-    try:
-        text = response.choices[0].message.content
-    except (AttributeError, IndexError, KeyError, TypeError) as exc:
-        raise ProviderResponseError("OpenAI response did not contain message text") from exc
-    if not isinstance(text, str):
-        raise ProviderResponseError("OpenAI response message text was not a string")
-    return text
+_SPEC = OpenAICompatibleSpec(provider_name="openai", api_key_env="OPENAI_API_KEY")
 
 
 class OpenAIProvider(LLMProvider):
-    """Synchronous OpenAI adapter with explicit or injected client construction."""
+    """Synchronous OpenAI adapter using chat completions and env fallback."""
 
     provider_name = "openai"
 
     def __init__(self, client: OpenAI | None = None, *, api_key: str | None = None):
-        if client is None:
-            if not api_key:
-                raise ValueError("api_key or an OpenAI client is required")
-            client = OpenAI(api_key=api_key)
-        self.client = client
+        self.client = build_sync_client(_SPEC, client=client, api_key=api_key)
 
     def generate(self, request: GenerationRequest) -> GenerationResult:
         try:
-            kwargs: dict[str, Any] = {
-                "model": request.model,
-                "messages": [{"role": "user", "content": request.prompt}],
-                "temperature": request.temperature,
-                "max_tokens": request.max_tokens,
-            }
-            if request.timeout is not None:
-                kwargs["timeout"] = request.timeout
-            response = self.client.chat.completions.create(**kwargs)
-            return GenerationResult(_extract_text(response), self.provider_name, request.model)
+            response = self.client.chat.completions.create(
+                **build_chat_completion_kwargs(request)
+            )
+            return parse_chat_completion_response(
+                response, provider_name=self.provider_name, model=request.model
+            )
         except ProviderResponseError:
             raise
         except Exception as exc:
@@ -55,29 +44,23 @@ class OpenAIProvider(LLMProvider):
 
 
 class AsyncOpenAIProvider(AsyncLLMProvider):
-    """Asynchronous OpenAI adapter with explicit or injected client construction."""
+    """Asynchronous OpenAI adapter using the same chat-completions path."""
 
     provider_name = "openai"
 
-    def __init__(self, client: AsyncOpenAI | None = None, *, api_key: str | None = None):
-        if client is None:
-            if not api_key:
-                raise ValueError("api_key or an OpenAI client is required")
-            client = AsyncOpenAI(api_key=api_key)
-        self.client = client
+    def __init__(
+        self, client: AsyncOpenAI | None = None, *, api_key: str | None = None
+    ):
+        self.client = build_async_client(_SPEC, client=client, api_key=api_key)
 
     async def generate(self, request: GenerationRequest) -> GenerationResult:
         try:
-            kwargs: dict[str, Any] = {
-                "model": request.model,
-                "messages": [{"role": "user", "content": request.prompt}],
-                "temperature": request.temperature,
-                "max_tokens": request.max_tokens,
-            }
-            if request.timeout is not None:
-                kwargs["timeout"] = request.timeout
-            response = await self.client.chat.completions.create(**kwargs)
-            return GenerationResult(_extract_text(response), self.provider_name, request.model)
+            response = await self.client.chat.completions.create(
+                **build_chat_completion_kwargs(request)
+            )
+            return parse_chat_completion_response(
+                response, provider_name=self.provider_name, model=request.model
+            )
         except ProviderResponseError:
             raise
         except Exception as exc:

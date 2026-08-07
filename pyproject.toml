@@ -5,6 +5,7 @@ description = "Reusable LLM-powered thought generation and interview pipelines"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "openai>=2.48.0",
     "pandas>=2.2",
     "pydantic>=2.9",
 ]
@@ -12,6 +13,7 @@ dependencies = [
 [project.optional-dependencies]
 providers = [
     "anthropic>=0.39",
+    "python-dotenv>=1.0",
     "openai>=1.54",
 ]
 dev = [

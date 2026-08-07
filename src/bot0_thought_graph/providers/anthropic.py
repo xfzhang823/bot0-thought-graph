@@ -1,8 +1,11 @@
-"""Anthropic adapters; SDK-specific types remain inside this module."""
+"""Anthropic adapters kept separate from the OpenAI-compatible providers."""
 
+import os
 from typing import Any
 
 from anthropic import AsyncAnthropic, Anthropic
+
+from bot0_thought_graph._env import load_repository_env
 
 from .contracts import (
     AsyncLLMProvider,
@@ -26,12 +29,14 @@ def _extract_text(response: Any) -> str:
 
 
 class AnthropicProvider(LLMProvider):
-    """Synchronous Anthropic adapter with explicit or injected client construction."""
+    """Synchronous Anthropic adapter with explicit or env-backed client setup."""
 
     provider_name = "anthropic"
 
     def __init__(self, client: Anthropic | None = None, *, api_key: str | None = None):
+        load_repository_env()
         if client is None:
+            api_key = api_key or os.getenv("ANTHROPIC_API_KEY") or os.getenv("CLAUDE_API_KEY")
             if not api_key:
                 raise ValueError("api_key or an Anthropic client is required")
             client = Anthropic(api_key=api_key)
@@ -56,12 +61,14 @@ class AnthropicProvider(LLMProvider):
 
 
 class AsyncAnthropicProvider(AsyncLLMProvider):
-    """Asynchronous Anthropic adapter with explicit or injected client construction."""
+    """Asynchronous Anthropic adapter with explicit or env-backed client setup."""
 
     provider_name = "anthropic"
 
     def __init__(self, client: AsyncAnthropic | None = None, *, api_key: str | None = None):
+        load_repository_env()
         if client is None:
+            api_key = api_key or os.getenv("ANTHROPIC_API_KEY") or os.getenv("CLAUDE_API_KEY")
             if not api_key:
                 raise ValueError("api_key or an Anthropic client is required")
             client = AsyncAnthropic(api_key=api_key)

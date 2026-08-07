@@ -1,10 +1,13 @@
 import json
+import os
 from types import SimpleNamespace
 
 import pytest
 
+from bot0_thought_graph import _env as env_module
 from bot0_thought_graph.config import Bot0Config, ProviderConfig
 from bot0_thought_graph.providers import (
+    create_provider,
     GenerationRequest,
     GenerationResult,
     LLMProvider,
@@ -68,18 +71,173 @@ def test_anthropic_adapter_and_malformed_responses():
         malformed.generate(request())
 
 
-def test_provider_exception_translation_and_no_import_time_clients():
+def test_provider_exception_translation_and_no_import_time_clients(monkeypatch, tmp_path):
     OpenAIProvider = pytest.importorskip("bot0_thought_graph.providers.openai").OpenAIProvider
-    AnthropicProvider = pytest.importorskip("bot0_thought_graph.providers.anthropic").AnthropicProvider
+    helper_module = pytest.importorskip("bot0_thought_graph.providers.openai_compatible")
     failing_openai = OpenAIProvider(
         client=SimpleNamespace(chat=SimpleNamespace(completions=FakeCompletions(error=RuntimeError("offline"))))
     )
     with pytest.raises(ProviderRequestError):
         failing_openai.generate(request())
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("CLAUDE_API_KEY", raising=False)
+    monkeypatch.setattr(helper_module, "load_repository_env", lambda: None)
     with pytest.raises(ValueError):
         OpenAIProvider()
-    with pytest.raises(ValueError):
-        AnthropicProvider()
+
+
+def test_repository_env_loader_respects_os_precedence(monkeypatch, tmp_path):
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "OPENAI_API_KEY=dotenv-openai\nANTHROPIC_API_KEY=dotenv-anthropic\n",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setenv("OPENAI_API_KEY", "os-openai")
+
+    monkeypatch.setattr(env_module, "_find_env_file", lambda filename: env_file)
+    env_module.load_repository_env()
+
+    assert os.environ["OPENAI_API_KEY"] == "os-openai"
+    assert os.environ["ANTHROPIC_API_KEY"] == "dotenv-anthropic"
+
+
+def test_openai_provider_uses_openai_api_key_from_environment(monkeypatch):
+    helper_module = pytest.importorskip("bot0_thought_graph.providers.openai_compatible")
+
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setenv("OPENAI_API_KEY", "os-openai")
+    monkeypatch.setattr(helper_module, "load_repository_env", lambda: None)
+
+    seen = {}
+
+    class FakeOpenAI:
+        def __init__(self, api_key):
+            seen["api_key"] = api_key
+            self.chat = SimpleNamespace(completions=FakeCompletions())
+
+    monkeypatch.setattr(helper_module, "OpenAI", FakeOpenAI)
+    pytest.importorskip("bot0_thought_graph.providers.openai").OpenAIProvider()
+    assert seen["api_key"] == "os-openai"
+
+
+def test_anthropic_provider_uses_anthropic_api_key_from_environment(monkeypatch):
+    anthropic_module = pytest.importorskip("bot0_thought_graph.providers.anthropic")
+
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("CLAUDE_API_KEY", raising=False)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "os-anthropic")
+
+    seen = {}
+
+    class FakeAnthropic:
+        def __init__(self, api_key):
+            seen["api_key"] = api_key
+            self.messages = SimpleNamespace(create=lambda **kwargs: None)
+
+    monkeypatch.setattr(anthropic_module, "Anthropic", FakeAnthropic)
+    anthropic_module.AnthropicProvider()
+    assert seen["api_key"] == "os-anthropic"
+
+
+def test_gemini_provider_uses_openai_compatible_base_url_and_api_key(monkeypatch):
+    gemini_module = pytest.importorskip("bot0_thought_graph.providers.gemini")
+    helper_module = pytest.importorskip("bot0_thought_graph.providers.openai_compatible")
+
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.setenv("GEMINI_API_KEY", "os-gemini")
+    monkeypatch.setattr(helper_module, "load_repository_env", lambda: None)
+
+    seen = {}
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            seen.update(kwargs)
+            self.chat = SimpleNamespace(
+                completions=FakeCompletions(
+                    SimpleNamespace(
+                        choices=[SimpleNamespace(message=SimpleNamespace(content="gemini-answer"))]
+                    )
+                )
+            )
+
+    monkeypatch.setattr(helper_module, "OpenAI", FakeOpenAI)
+    provider = gemini_module.GeminiProvider()
+    result = provider.generate(request())
+
+    assert seen["api_key"] == "os-gemini"
+    assert seen["base_url"] == "https://generativelanguage.googleapis.com/v1beta/openai/"
+    assert provider.client.chat.completions.calls[0]["messages"] == [
+        {"role": "user", "content": "Explain systems"}
+    ]
+    assert provider.client.chat.completions.calls[0]["model"] == "test-model"
+    assert result.text == "gemini-answer"
+
+
+def test_deepseek_provider_uses_openai_compatible_base_url_and_reasoning_separation(monkeypatch):
+    deepseek_module = pytest.importorskip("bot0_thought_graph.providers.deepseek")
+    helper_module = pytest.importorskip("bot0_thought_graph.providers.openai_compatible")
+
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "os-deepseek")
+    monkeypatch.setattr(helper_module, "load_repository_env", lambda: None)
+
+    seen = {}
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            seen.update(kwargs)
+            self.chat = SimpleNamespace(
+                completions=FakeCompletions(
+                    SimpleNamespace(
+                        choices=[
+                            SimpleNamespace(
+                                message=SimpleNamespace(
+                                    content="final answer",
+                                    reasoning_content="hidden reasoning",
+                                )
+                            )
+                        ]
+                    )
+                )
+            )
+
+    monkeypatch.setattr(helper_module, "OpenAI", FakeOpenAI)
+    provider = deepseek_module.DeepSeekProvider()
+    result = provider.generate(request())
+
+    assert seen["api_key"] == "os-deepseek"
+    assert seen["base_url"] == "https://api.deepseek.com"
+    assert provider.client.chat.completions.calls[0]["messages"] == [
+        {"role": "user", "content": "Explain systems"}
+    ]
+    assert provider.client.chat.completions.calls[0]["model"] == "test-model"
+    assert result.text == "final answer"
+    assert result.reasoning_content == "hidden reasoning"
+
+
+def test_provider_factory_supports_gemini_and_deepseek(monkeypatch):
+    helper_module = pytest.importorskip("bot0_thought_graph.providers.openai_compatible")
+    monkeypatch.setattr(helper_module, "load_repository_env", lambda: None)
+    monkeypatch.setenv("GEMINI_API_KEY", "os-gemini")
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "os-deepseek")
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+            self.chat = SimpleNamespace(
+                completions=FakeCompletions(
+                    SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="answer"))])
+                )
+            )
+
+    monkeypatch.setattr(helper_module, "OpenAI", FakeOpenAI)
+    assert create_provider("gemini").provider_name == "gemini"
+    assert create_provider("deepseek").provider_name == "deepseek"
 
 
 @pytest.mark.asyncio

@@ -20,19 +20,16 @@ class SubConcept(BaseModel):
 class JSONResponse(BaseModel):
     data: Union[Dict[str, Any], List[Dict[str, Any]]]
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class TabularResponse(BaseModel):
     data: pd.DataFrame
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class CodeResponse(BaseModel):
     code: str
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)

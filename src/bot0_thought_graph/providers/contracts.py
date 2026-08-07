@@ -1,4 +1,4 @@
-"""Provider-neutral contracts and value objects."""
+"""Provider-neutral request, result, and protocol contracts."""
 
 from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
@@ -6,7 +6,7 @@ from typing import Any, Protocol, runtime_checkable
 
 @dataclass(frozen=True)
 class GenerationRequest:
-    """A provider-independent text generation request."""
+    """A provider-independent text-generation request."""
 
     prompt: str
     model: str
@@ -27,11 +27,16 @@ class GenerationRequest:
 
 @dataclass(frozen=True)
 class GenerationResult:
-    """Normalized text returned by a provider adapter."""
+    """Normalized provider output.
+
+    ``text`` is the final answer visible to callers. ``reasoning_content`` is
+    optional provider-specific metadata and must remain separate from ``text``.
+    """
 
     text: str
     provider: str
     model: str
+    reasoning_content: str | None = None
 
 
 class ProviderError(RuntimeError):

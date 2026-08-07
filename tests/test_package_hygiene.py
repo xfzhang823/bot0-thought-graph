@@ -60,6 +60,8 @@ def test_provider_package_does_not_construct_or_import_adapters_at_import_time(t
     code = (
         "import sys; import bot0_thought_graph.providers; "
         "assert 'bot0_thought_graph.providers.openai' not in sys.modules; "
-        "assert 'bot0_thought_graph.providers.anthropic' not in sys.modules"
+        "assert 'bot0_thought_graph.providers.anthropic' not in sys.modules; "
+        "assert 'bot0_thought_graph.providers.gemini' not in sys.modules; "
+        "assert 'bot0_thought_graph.providers.deepseek' not in sys.modules"
     )
     subprocess.run([sys.executable, "-c", code], cwd=tmp_path, env=env, check=True)

@@ -3,7 +3,7 @@
 import logging
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -56,10 +56,7 @@ class ThoughtJSONModel(BaseModel):
         None, description="An optional list of sub-thoughts associated with the main thought"
     )
 
-    class Config:
-        from_attributes = True
-        json_encoders = {Optional: lambda v: v or None}
-        exclude_none = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ClusterJSONModel(BaseModel):
@@ -67,9 +64,7 @@ class ClusterJSONModel(BaseModel):
     description: Optional[str] = Field(None, description="Description of the cluster")
     thoughts: List[str] = Field(..., description="List of thought names within the cluster")
 
-    class Config:
-        from_attribute = True
-        json_encoders = {Optional: lambda v: v or None}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class IdeaClusterJSONModel(BaseModel):
@@ -83,9 +78,7 @@ class IdeaJSONModel(BaseModel):
         None, description="A list of individual thoughts without clustering."
     )
 
-    class Config:
-        from_attribute = True
-        json_encoders = {Optional: lambda v: v or None}
+    model_config = ConfigDict(from_attributes=True)
 
 
 def validate_thought_batch(thought_data_batch: List[dict]) -> List[ThoughtJSONModel]:
