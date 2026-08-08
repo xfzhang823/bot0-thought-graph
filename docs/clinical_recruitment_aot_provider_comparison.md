@@ -4,7 +4,7 @@
 
 **Concept:** `clinical research participant recruitment`
 
-The same Array of Thoughts behavioral test was run against three provider/model combinations:
+The original Array of Thoughts behavioral test was run against three provider/model combinations:
 
 | Provider      | Model              |
 | ------------- | ------------------ |
@@ -12,7 +12,55 @@ The same Array of Thoughts behavioral test was run against three provider/model 
 | DeepSeek      | `deepseek-chat`    |
 | Google Gemini | `gemini-2.5-flash` |
 
-> Note: the DeepSeek run in this comparison still uses `deepseek-chat`. A separate run with `deepseek-v4-flash` should be performed before treating this as the final current-generation provider benchmark.
+> Note: the recorded DeepSeek result below uses the legacy `deepseek-chat` identifier. It is retained as historical evidence; it is not a V4 Flash thinking-mode result.
+
+## DeepSeek V4 Flash comparison procedure
+
+The provider now supports explicit DeepSeek V4 Flash thinking-mode selection without changing the provider-neutral request contract. Both runs use the same model identifier:
+
+```text
+deepseek-v4-flash
+```
+
+The `DEEPSEEK_THINKING` environment variable controls the request:
+
+| Setting | DeepSeek request payload |
+| ------- | ------------------------ |
+| `enabled` | `extra_body={"thinking": {"type": "enabled"}}` |
+| `disabled` | `extra_body={"thinking": {"type": "disabled"}}` |
+| absent | No explicit toggle; preserve the provider default |
+
+The behavioral test prints the selected mode so the output can be audited. The two controlled comparison runs are:
+
+```bash
+DEEPSEEK_THINKING=disabled \
+THOUGHT_GRAPH_PROVIDER=deepseek \
+DEEPSEEK_MODEL=deepseek-v4-flash \
+python examples/behavior_test.py
+```
+
+```bash
+DEEPSEEK_THINKING=enabled \
+THOUGHT_GRAPH_PROVIDER=deepseek \
+DEEPSEEK_MODEL=deepseek-v4-flash \
+python examples/behavior_test.py
+```
+
+Expected audit header:
+
+```text
+Provider: deepseek
+Model: deepseek-v4-flash
+Thinking: enabled
+```
+
+or:
+
+```text
+Thinking: disabled
+```
+
+DeepSeek documents `thinking.type` as the mode toggle and returns thinking output separately as `reasoning_content`; the comparison should evaluate the parsed final content and retain reasoning metadata separately. See the [DeepSeek thinking-mode documentation](https://api-docs.deepseek.com/guides/thinking_mode).
 
 The behavioral test evaluates two core Array of Thoughts operations:
 
@@ -648,7 +696,7 @@ This suggests that **structural fundamentality should be added permanently to th
 
 # Current Conclusion
 
-This run provides encouraging evidence that `bot0-thought-graph` can produce useful provider-independent hierarchical decomposition.
+This historical run provides encouraging evidence that `bot0-thought-graph` can produce useful provider-independent hierarchical decomposition.
 
 The preliminary ordering is:
 
@@ -666,18 +714,19 @@ The DeepSeek result shows a more meaningful structural weakness, but this run sh
 deepseek-chat
 ```
 
-rather than the intended current benchmark model:
+rather than the current V4 Flash benchmark model:
 
 ```text
 deepseek-v4-flash
 ```
 
-The next controlled comparison should therefore use the same concept and generation settings with:
+The next controlled comparison should therefore use the same concept and generation settings with both DeepSeek V4 Flash modes:
 
 ```text
 GPT-5.6 Luna
 Gemini 3.6 Flash
-DeepSeek V4 Flash
+DeepSeek V4 Flash (non-thinking)
+DeepSeek V4 Flash (thinking)
 ```
 
 and ideally repeat each model several times before drawing a final provider-level conclusion.
