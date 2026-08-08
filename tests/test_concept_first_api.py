@@ -57,6 +57,16 @@ def test_convenience_methods_translate_horizontal_and_vertical_requests():
     assert "direct child details" in vertical_request.prompt
 
 
+def test_convenience_methods_forward_configured_token_budgets():
+    provider = FakeProvider([HORIZONTAL, VERTICAL])
+    engine = ThoughtGraphEngine(provider, model="fake-model")
+
+    engine.generate_array_of_thoughts("systems", max_tokens=4096)
+    engine.expand_subtopic("systems", "hardware", max_tokens=4096)
+
+    assert [request.max_tokens for request in provider.requests] == [4096, 4096]
+
+
 def test_structured_array_and_graph_are_public_typed_results_without_persistence(tmp_path):
     provider = FakeProvider([HORIZONTAL])
     engine = ThoughtGraphEngine(provider)

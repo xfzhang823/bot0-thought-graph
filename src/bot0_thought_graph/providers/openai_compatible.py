@@ -65,9 +65,13 @@ def build_chat_completion_kwargs(request: GenerationRequest) -> dict[str, Any]:
     kwargs: dict[str, Any] = {
         "model": request.model,
         "messages": [{"role": "user", "content": request.prompt}],
-        "temperature": request.temperature,
-        "max_tokens": request.max_tokens,
     }
+    if request.model.lower().startswith("gpt-5"):
+        kwargs["reasoning_effort"] = "minimal"
+        kwargs["max_completion_tokens"] = request.max_tokens
+    else:
+        kwargs["temperature"] = request.temperature
+        kwargs["max_tokens"] = request.max_tokens
     if request.timeout is not None:
         kwargs["timeout"] = request.timeout
     return kwargs

@@ -240,6 +240,16 @@ def test_provider_factory_supports_gemini_and_deepseek(monkeypatch):
     assert create_provider("deepseek").provider_name == "deepseek"
 
 
+def test_openai_compatible_requests_use_completion_token_field_for_gpt5_models():
+    helper_module = pytest.importorskip("bot0_thought_graph.providers.openai_compatible")
+    request = GenerationRequest("Explain systems", "gpt-5-mini-2025-08-07", max_tokens=42)
+    kwargs = helper_module.build_chat_completion_kwargs(request)
+    assert "temperature" not in kwargs
+    assert "max_tokens" not in kwargs
+    assert kwargs["reasoning_effort"] == "minimal"
+    assert kwargs["max_completion_tokens"] == 42
+
+
 @pytest.mark.asyncio
 async def test_async_adapters_use_injected_clients():
     AsyncOpenAIProvider = pytest.importorskip("bot0_thought_graph.providers.openai").AsyncOpenAIProvider

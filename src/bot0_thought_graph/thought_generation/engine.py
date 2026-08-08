@@ -94,6 +94,7 @@ class VerticalGenerationRequest:
     timeout: float | None = None
     prompt_template: str | None = None
 
+
 class ThoughtGraphEngine:
     """Generate, expand, organize, and optionally persist thought structures.
 
@@ -360,6 +361,7 @@ class ThoughtGraphEngine:
         subtopic: str,
         *,
         max_details: int = 8,
+        max_tokens: int = 1056,
         model: str | None = None,
     ) -> list[str]:
         """Generate direct, more-specific children of one subtopic.
@@ -375,6 +377,7 @@ class ThoughtGraphEngine:
             concept: Root concept that constrains the expansion.
             subtopic: Existing subtopic to expand vertically.
             max_details: Maximum number of direct-child names to return.
+            max_tokens: Maximum number of provider response tokens.
             model: Optional provider-specific model override. When omitted, the
                 engine's default model is used.
 
@@ -392,6 +395,7 @@ class ThoughtGraphEngine:
             concept,
             subtopic,
             max_details=max_details,
+            max_tokens=max_tokens,
             model=model,
         )
         return [item.name for item in result.sub_thoughts or []]
@@ -401,6 +405,7 @@ class ThoughtGraphEngine:
         concept: str,
         *,
         max_subtopics: int = 8,
+        max_tokens: int = 1056,
         ranked: bool = False,
         model: str | None = None,
     ) -> ThoughtArray:
@@ -418,6 +423,7 @@ class ThoughtGraphEngine:
             concept: Concept to explore horizontally.
             max_subtopics: Maximum number of thoughts included in the returned
                 array.
+            max_tokens: Maximum number of provider response tokens.
             ranked: Whether to cluster and rank the generated thoughts before
                 constructing the array.
             model: Optional provider-specific model override. When omitted, the
@@ -439,6 +445,7 @@ class ThoughtGraphEngine:
             idea=concept,
             model=self._resolve_model(model),
             num_thoughts=max_subtopics,
+            max_tokens=max_tokens,
             num_clusters=max_subtopics if ranked else None,
             top_n=max_subtopics if ranked else None,
             prompt_template=CONCEPT_SUBTOPIC_GENERATION_PROMPT,
@@ -571,6 +578,7 @@ class ThoughtGraphEngine:
             concept,
             node.name,
             max_details=breadth,
+            max_tokens=1056,
             model=model,
         )
         node.children = [
@@ -593,6 +601,7 @@ class ThoughtGraphEngine:
         subtopic: str,
         *,
         max_details: int,
+        max_tokens: int,
         model: str | None,
     ):
         """Generate the typed vertical-expansion result for one subtopic.
@@ -627,6 +636,7 @@ class ThoughtGraphEngine:
                 model=self._resolve_model(model),
                 progression_type="direct_children",
                 num_sub_thoughts=max_details,
+                max_tokens=max_tokens,
                 prompt_template=CONCEPT_DETAIL_GENERATION_PROMPT,
             )
         )
