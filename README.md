@@ -33,7 +33,35 @@ uv sync
 
 ## Concept-first usage
 
-The simplest workflow starts with a concept. Supply a provider implementation, or use an adapter with an explicitly constructed SDK client:
+The simplest external workflow uses the existing `ThoughtGraphEngine` façade
+with a provider name. Provider adapters do not need to be imported manually:
+
+```python
+from bot0_thought_graph import ThoughtGraphEngine
+
+generator = ThoughtGraphEngine(
+    provider="deepseek",
+    model="deepseek-v4-flash",
+)
+
+graph = generator.generate_thought_graph(
+    topic="clinical research participant recruitment",
+    depth=3,
+    breadth=5,
+)
+```
+
+The supported provider names are `openai`, `gemini`, `deepseek`, and
+`anthropic`. Use `model=None` to select the package default; a
+`<PROVIDER>_MODEL` environment variable takes precedence. `breadth` is the
+maximum number of horizontal siblings and vertical children retained at each
+expansion. `depth=1` returns the root plus its first horizontal layer,
+`depth=2` adds one vertical expansion beneath that layer, and the façade
+supports depths through `MAX_FACADE_DEPTH` (currently three child levels).
+The existing `concept=` parameter remains supported as an alias for `topic=`.
+
+For advanced callers, direct provider injection remains supported. Supply a
+provider implementation or an explicitly constructed SDK client:
 
 ```python
 from bot0_thought_graph import ThoughtGraphEngine
@@ -62,7 +90,7 @@ graph = engine.generate_thought_graph(
 )
 ```
 
-`generate_subtopics()` and `generate_array_of_thoughts()` perform horizontal expansion: they return distinct major dimensions at a similar level of abstraction. `expand_subtopic()` performs one-level vertical expansion: it returns more-specific direct children of one selected subtopic. The convenience list methods return `list[str]`; structured methods return `ThoughtArray` and `ThoughtGraph`.
+`generate_subtopics()` and `generate_array_of_thoughts()` perform horizontal expansion: they return distinct major dimensions at a similar level of abstraction. `expand_subtopic()` performs one-level vertical expansion using implementation-step semantics by default. The convenience list methods return `list[str]`; structured methods return `ThoughtArray` and `ThoughtGraph`.
 
 Graph `depth=1` returns the root concept and its first-level subtopics. `depth=2` adds one vertical expansion under each first-level subtopic. The façade bounds depth at three child levels (`MAX_FACADE_DEPTH`), caps children at `breadth`, and makes one provider call per expanded node. Set `ranked=True` on horizontal or graph methods to route the first-level subtopics through the clustering/ranking pipeline. These methods do not persist results.
 
@@ -119,6 +147,7 @@ An async variant, `AsyncLLMProvider`, defines `async def generate(...)` and is i
 The request-based API remains available when callers need explicit generation controls — model settings, prompt overrides, progression types, or clustering and ranking:
 
 ```python
+from bot0_thought_graph import ProgressionType
 from bot0_thought_graph.thought_generation import (
     HorizontalGenerationRequest,
     VerticalGenerationRequest,
@@ -139,7 +168,7 @@ expanded = engine.expand(
         idea="embedded systems",
         thought="toolchains",
         model="your-model",
-        progression_type="implementation_steps",  # default; "direct_children" for the façade
+        progression_type=ProgressionType.IMPLEMENTATION_STEPS,
         num_sub_thoughts=7,
     )
 )  # -> ThoughtJSONModel

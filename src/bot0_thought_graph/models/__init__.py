@@ -18,6 +18,7 @@ from .thought_models import (
     ThoughtGraph,
     ThoughtNode,
     ThoughtJSONModel,
+    ProgressionType,
     validate_thought_batch,
 )
 
@@ -27,5 +28,5 @@ __all__ = [
     "IndexedIdeaJSONModel", "IndexedSubThoughtJSONModel", "IndexedThoughtJSONModel",
     "JSONResponse", "QuestionAnswerPair", "SubConcept", "SubThoughtJSONModel",
     "TabularResponse", "TextResponse", "Thought", "ThoughtArray", "ThoughtGraph",
-    "ThoughtJSONModel", "ThoughtNode", "validate_thought_batch",
+    "ThoughtJSONModel", "ThoughtNode", "ProgressionType", "validate_thought_batch",
 ]

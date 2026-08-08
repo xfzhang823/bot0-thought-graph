@@ -2,7 +2,7 @@
 
 The stable top-level entry points are:
 
-- `ThoughtGraphEngine` for concept-first horizontal subtopics, vertical expansion, bounded thought graphs, provider-injected generation, indexing, and explicit saving.
+- `ThoughtGraphEngine` for concept-first horizontal subtopics, vertical expansion, bounded thought graphs, named-provider or provider-injected generation, indexing, and explicit saving.
 - `Thought`, `ThoughtArray`, `ThoughtNode`, and `ThoughtGraph` as the structured concept-first result models.
 - `InterviewEngine` for typed, headless interview sessions and explicit session saving.
 - `InterviewCoordinator` as a thin delegation layer for applications.
@@ -11,7 +11,46 @@ The stable top-level entry points are:
 
 Requests, models, policies, and adapter classes are available from their subpackages. Provider SDK adapters are lazy and require the `providers` extra; fake/custom providers require no SDK client construction.
 
-The package is synchronous at its public engine boundary. It has no global clients, implicit model/provider selection, repository-root discovery, automatic persistence, or import-time network/filesystem behavior. Callers may extend it by implementing `LLMProvider` or `Repository` and injecting those objects.
+The package is synchronous at its public engine boundary. It has no global clients, repository-root discovery, automatic persistence, or import-time network/filesystem behavior. Callers may extend it by implementing `LLMProvider` or `Repository` and injecting those objects.
+
+## External consumer workflow
+
+The canonical external API is the existing `ThoughtGraphEngine` façade:
+
+```python
+from bot0_thought_graph import ThoughtGraphEngine
+
+generator = ThoughtGraphEngine(
+    provider="deepseek",
+    model="deepseek-v4-flash",
+)
+
+graph = generator.generate_thought_graph(
+    topic="clinical research participant recruitment",
+    depth=3,
+    breadth=5,
+)
+```
+
+`provider` accepts `"openai"`, `"gemini"`, `"deepseek"`, or `"anthropic"`.
+Named providers are created through the existing provider factory. Set
+`model=None` to use the package default, with `<PROVIDER>_MODEL` taking
+precedence. The returned value is always the package-owned `ThoughtGraph`
+model, independent of the provider SDK.
+
+`breadth` is the maximum number of horizontal siblings and the maximum number
+of children retained at each vertical expansion. `depth=1` returns the root
+plus its first horizontal layer; `depth=2` adds one vertical expansion beneath
+each first-level thought; `depth=3` adds a third generated child level. Depth
+is bounded by `ThoughtGraphEngine.MAX_FACADE_DEPTH`. The existing `concept=`
+parameter remains supported for compatibility. Results use Pydantic's standard
+`model_dump()` and `model_dump_json()` serialization.
+
+Direct provider-object injection remains supported:
+
+```python
+engine = ThoughtGraphEngine(provider, model="your-model")
+```
 
 ## Concept-first workflow
 

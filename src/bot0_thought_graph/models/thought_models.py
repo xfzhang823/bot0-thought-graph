@@ -1,11 +1,22 @@
 """Deterministic models for thought graphs and generated thought data."""
 
 import logging
+from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 logger = logging.getLogger(__name__)
+
+
+class ProgressionType(str, Enum):
+    """Supported semantic modes for vertical thought generation."""
+
+    IMPLEMENTATION_STEPS = "implementation_steps"
+    SIMPLE_TO_COMPLEX = "simple_to_complex"
+    CHRONOLOGICAL = "chronological"
+    PROBLEM_SOLUTION = "problem_solution"
+    PREREQUISITE_DEPENDENCY = "prerequisite_dependency"
 
 
 class Thought(BaseModel):

@@ -1,7 +1,7 @@
-"""Standalone, provider-injected thought generation and interviewing."""
+"""Reusable thought generation and interviewing APIs."""
 
 from .interview import InterviewEngine
-from .models import Thought, ThoughtArray, ThoughtGraph, ThoughtNode
+from .models import ProgressionType, Thought, ThoughtArray, ThoughtGraph, ThoughtNode
 from .orchestration import InterviewCoordinator
 from .providers import AsyncLLMProvider, LLMProvider
 from .storage import JsonRepository, MemoryRepository
@@ -14,6 +14,7 @@ __all__ = [
     "JsonRepository",
     "LLMProvider",
     "MemoryRepository",
+    "ProgressionType",
     "Thought",
     "ThoughtArray",
     "ThoughtGraph",

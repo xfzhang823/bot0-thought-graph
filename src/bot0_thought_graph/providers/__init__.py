@@ -1,6 +1,7 @@
 """Provider exports, lazy adapter loading, and named provider selection."""
 
 from importlib import import_module
+import os
 
 from bot0_thought_graph._env import load_repository_env
 
@@ -25,6 +26,13 @@ _LAZY_ADAPTERS = {
     "DeepSeekProvider": (".deepseek", "DeepSeekProvider"),
     "GeminiProvider": (".gemini", "GeminiProvider"),
     "OpenAIProvider": (".openai", "OpenAIProvider"),
+}
+
+_DEFAULT_MODELS = {
+    "openai": "gpt-5.6-luna",
+    "gemini": "gemini-3.6-flash",
+    "deepseek": "deepseek-v4-flash",
+    "anthropic": "claude-3-5-sonnet-20241022",
 }
 
 
@@ -55,10 +63,23 @@ def create_provider(provider: str, **kwargs):
     module = import_module(__name__)
     return getattr(module, class_name)(**kwargs)
 
+
+def default_model(provider: str) -> str:
+    """Resolve the public façade's default model for a provider.
+
+    An explicit ``<PROVIDER>_MODEL`` environment variable takes precedence.
+    """
+    normalized = provider.strip().lower()
+    try:
+        fallback = _DEFAULT_MODELS[normalized]
+    except KeyError as exc:
+        raise ValueError(f"Unsupported provider: {provider}") from exc
+    return os.getenv(f"{normalized.upper()}_MODEL", fallback)
+
 __all__ = [
     "AnthropicProvider", "AsyncAnthropicProvider", "AsyncDeepSeekProvider",
     "AsyncGeminiProvider", "AsyncLLMProvider", "AsyncOpenAIProvider",
     "DeepSeekProvider", "GenerationRequest", "GenerationResult", "GeminiProvider",
     "LLMProvider", "OpenAIProvider", "ProviderError", "ProviderRequestError",
-    "ProviderResponseError", "create_provider",
+    "ProviderResponseError", "create_provider", "default_model",
 ]

@@ -7,6 +7,7 @@ from bot0_thought_graph.models import (
     IdeaClusterJSONModel,
     IdeaJSONModel,
     IndexedIdeaJSONModel,
+    ProgressionType,
     Thought,
     ThoughtArray,
     ThoughtGraph,
@@ -16,7 +17,7 @@ from bot0_thought_graph.prompts import (
     CONCEPT_DETAIL_GENERATION_PROMPT,
     CONCEPT_SUBTOPIC_GENERATION_PROMPT,
 )
-from bot0_thought_graph.providers import LLMProvider
+from bot0_thought_graph.providers import LLMProvider, create_provider, default_model
 from bot0_thought_graph.storage import Repository
 
 from .expansion import expand_idea, expand_vertical
@@ -75,7 +76,10 @@ class VerticalGenerationRequest:
         thought: Existing thought to expand.
         model: Provider-specific model identifier.
         progression_type: Semantic relationship expected between the parent
-            thought and its generated children.
+            thought and its generated children. Supported prompt-guided values
+            include ``implementation_steps``, ``simple_to_complex``,
+            ``chronological``, ``problem_solution``, and
+            ``implementation_steps`` and ``prerequisite_dependency``.
         num_sub_thoughts: Maximum number of child thoughts to request.
         temperature: Sampling temperature passed to the language model.
         max_tokens: Maximum number of tokens allowed in the provider response.
@@ -87,12 +91,17 @@ class VerticalGenerationRequest:
     idea: str
     thought: str
     model: str
-    progression_type: str = "implementation_steps"
+    progression_type: ProgressionType = ProgressionType.IMPLEMENTATION_STEPS
     num_sub_thoughts: int = 7
     temperature: float = 0.7
     max_tokens: int = 1056
     timeout: float | None = None
     prompt_template: str | None = None
+
+    def __post_init__(self) -> None:
+        """Normalize compatible raw strings to the public enum."""
+        if not isinstance(self.progression_type, ProgressionType):
+            object.__setattr__(self, "progression_type", ProgressionType(self.progression_type))
 
 
 class ThoughtGraphEngine:
@@ -131,27 +140,37 @@ class ThoughtGraphEngine:
 
     def __init__(
         self,
-        provider: LLMProvider,
+        provider: LLMProvider | str,
         repository: Repository[Any] | None = None,
         *,
-        model: str = "default",
+        model: str | None = None,
     ) -> None:
         """Initialize the thought-graph engine.
 
         Args:
             provider: Provider implementation responsible for language-model
-                calls.
+                calls, or a supported provider name. Named providers are
+                created through ``bot0_thought_graph.providers.create_provider``.
             repository: Optional persistence adapter. Results are not persisted
                 unless ``save`` is called explicitly.
             model: Default model identifier used by façade methods when a
-                per-call model override is not supplied.
+                per-call model override is not supplied. When omitted for a
+                named provider, the package's provider default is used; when
+                omitted for an injected provider, ``"default"`` preserves the
+                existing injected-engine behavior.
 
         Raises:
             ValueError: If ``model`` is not a non-empty string.
         """
-        self.provider = provider
+        if isinstance(provider, str):
+            provider_name = self._require_text(provider, "provider").lower()
+            self.provider = create_provider(provider_name)
+            resolved_model = model if model is not None else default_model(provider_name)
+        else:
+            self.provider = provider
+            resolved_model = model if model is not None else "default"
         self.repository = repository
-        self.model = self._require_text(model, "model")
+        self.model = self._require_text(resolved_model, "model")
 
     def generate(self, request: HorizontalGenerationRequest) -> IdeaJSONModel:
         """Generate sibling-level thoughts using the typed horizontal API.
@@ -212,7 +231,7 @@ class ThoughtGraphEngine:
         The selected thought is expanded within the context of the root idea.
         ``request.progression_type`` defines the intended relationship between
         the parent thought and its generated children, such as implementation
-        steps or direct conceptual children.
+        steps, direct conceptual children, or strict prerequisites.
 
         This method performs one vertical expansion operation and does not
         persist the result.
@@ -249,7 +268,7 @@ class ThoughtGraphEngine:
         idea: IdeaJSONModel,
         *,
         model: str,
-        progression_type: str = "implementation_steps",
+        progression_type: ProgressionType = ProgressionType.IMPLEMENTATION_STEPS,
         num_sub_thoughts: int = 5,
         temperature: float = 0.7,
         max_tokens: int = 1056,
@@ -283,6 +302,7 @@ class ThoughtGraphEngine:
             Exception: Any provider, parsing, or validation exception raised by
                 the underlying expansion implementation.
         """
+        progression_type = ProgressionType(progression_type)
         return expand_idea(
             self.provider,
             idea,
@@ -363,6 +383,7 @@ class ThoughtGraphEngine:
         max_details: int = 8,
         max_tokens: int = 1056,
         model: str | None = None,
+        progression_type: ProgressionType = ProgressionType.IMPLEMENTATION_STEPS,
     ) -> list[str]:
         """Generate direct, more-specific children of one subtopic.
 
@@ -380,6 +401,8 @@ class ThoughtGraphEngine:
             max_tokens: Maximum number of provider response tokens.
             model: Optional provider-specific model override. When omitted, the
                 engine's default model is used.
+            progression_type: Semantic relationship used for generated
+                children. Raw strings are normalized to ``ProgressionType``.
 
         Returns:
             A list containing the names of the generated direct children.
@@ -397,6 +420,7 @@ class ThoughtGraphEngine:
             max_details=max_details,
             max_tokens=max_tokens,
             model=model,
+            progression_type=progression_type,
         )
         return [item.name for item in result.sub_thoughts or []]
 
@@ -461,10 +485,12 @@ class ThoughtGraphEngine:
 
     def generate_thought_graph(
         self,
-        concept: str,
+        concept: str | None = None,
         *,
+        topic: str | None = None,
         depth: int = 2,
         breadth: int = 6,
+        progression_type: ProgressionType = ProgressionType.IMPLEMENTATION_STEPS,
         ranked: bool = False,
         model: str | None = None,
     ) -> ThoughtGraph:
@@ -493,10 +519,16 @@ class ThoughtGraphEngine:
         graphs remain in memory and are not persisted automatically.
 
         Args:
-            concept: Root concept represented by the graph.
+            concept: Root concept represented by the graph. Existing callers
+                may continue to pass this positionally or by keyword.
+            topic: Alias for ``concept`` intended for external callers. Only
+                one of ``concept`` and ``topic`` may be supplied.
             depth: Number of generated child levels beneath the root. Must be
                 between 1 and ``MAX_FACADE_DEPTH``, inclusive.
             breadth: Maximum number of children retained per expanded node.
+            progression_type: Semantic relationship used for every vertical
+                graph expansion. Raw strings are normalized to
+                ``ProgressionType``.
             ranked: Whether to cluster and rank the first-level horizontal
                 subtopics.
             model: Optional provider-specific model override. When omitted, the
@@ -513,9 +545,14 @@ class ThoughtGraphEngine:
             Exception: Any provider, parsing, clustering, ranking, or validation
                 exception raised during graph generation.
         """
+        if topic is not None:
+            if concept is not None:
+                raise ValueError("provide either concept or topic, not both")
+            concept = topic
         concept = self._require_text(concept, "concept")
         depth = self._require_positive(depth, "depth")
         breadth = self._require_positive(breadth, "breadth")
+        progression_type = ProgressionType(progression_type)
         if depth > self.MAX_FACADE_DEPTH:
             raise ValueError(f"depth must be <= {self.MAX_FACADE_DEPTH}")
 
@@ -541,6 +578,7 @@ class ThoughtGraphEngine:
                     level=1,
                     breadth=breadth,
                     model=model,
+                    progression_type=progression_type,
                 )
         return ThoughtGraph(concept=concept, root=root, depth=depth, breadth=breadth)
 
@@ -553,6 +591,7 @@ class ThoughtGraphEngine:
         level: int,
         breadth: int,
         model: str | None,
+        progression_type: ProgressionType,
     ) -> None:
         """Recursively populate descendants beneath one thought-graph node.
 
@@ -580,6 +619,7 @@ class ThoughtGraphEngine:
             max_details=breadth,
             max_tokens=1056,
             model=model,
+            progression_type=progression_type,
         )
         node.children = [
             ThoughtNode(name=item.name, description=item.description)
@@ -593,6 +633,7 @@ class ThoughtGraphEngine:
                 level=level + 1,
                 breadth=breadth,
                 model=model,
+                progression_type=progression_type,
             )
 
     def _expand_subtopic_result(
@@ -603,12 +644,13 @@ class ThoughtGraphEngine:
         max_details: int,
         max_tokens: int,
         model: str | None,
+        progression_type: ProgressionType = ProgressionType.IMPLEMENTATION_STEPS,
     ):
         """Generate the typed vertical-expansion result for one subtopic.
 
         This helper validates the façade arguments and translates them into a
-        ``VerticalGenerationRequest`` configured to generate direct conceptual
-        children.
+        ``VerticalGenerationRequest`` configured for the requested progression
+        type.
 
         Args:
             concept: Root concept that constrains the expansion.
@@ -634,7 +676,7 @@ class ThoughtGraphEngine:
                 idea=concept,
                 thought=subtopic,
                 model=self._resolve_model(model),
-                progression_type="direct_children",
+                progression_type=progression_type,
                 num_sub_thoughts=max_details,
                 max_tokens=max_tokens,
                 prompt_template=CONCEPT_DETAIL_GENERATION_PROMPT,

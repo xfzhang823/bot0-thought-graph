@@ -85,6 +85,7 @@ from models.thought_models import (
     ThoughtJSONModel,
     validate_thought_batch,
 )
+from bot0_thought_graph.models import ProgressionType
 from prompts.thought_generation_prompt_templates import (
     SUB_THOUGHT_GENERATION_PROMPT,
     RECLUSTER_AND_PICK_TOP_CLUSTER_PROMPT,
@@ -378,7 +379,7 @@ class ThoughtGenerator:
         self,
         thought: str,
         idea: str,  # high level concept input by user or system-record keeping in json
-        progression_type: str = "implementation_steps",
+        progression_type: ProgressionType = ProgressionType.IMPLEMENTATION_STEPS,
         num_sub_thoughts: int = 7,
         temperature: int = None,
     ) -> ThoughtJSONModel:
@@ -389,7 +390,7 @@ class ThoughtGenerator:
         Args:
             - thought (str): The main topic to generate sub-thoughts for.
             * idea (str): The overarching idea or theme containing the highest level concept.
-            - progression_type (str): The type of progression
+            - progression_type (ProgressionType | str): The type of progression
             (e.g., "simple_to_complex", "implementation_steps").
                 4 types of progression_type:
                     "simple_to_complex",
@@ -430,11 +431,12 @@ class ThoughtGenerator:
                 ]
             }
         """
+        progression_type = ProgressionType(progression_type)
         prompt = self.create_prompt(
             prompt_template=VERTICAL_SUB_THOUGHT_GENERATION_PROMPT,
             thought=thought,
             num_sub_thoughts=num_sub_thoughts,
-            progression_type=progression_type,
+            progression_type=progression_type.value,
             idea=idea,
         )
         thought_response_model = self.call_llm(
@@ -451,7 +453,7 @@ class ThoughtGenerator:
     def generate_array_of_thoughts(
         self,
         input_data: Dict,
-        progression_type: str = "implementation_steps",
+        progression_type: ProgressionType = ProgressionType.IMPLEMENTATION_STEPS,
         num_sub_thoughts: int = 5,
         temperature: int = None,
     ) -> IdeaJSONModel:
@@ -475,7 +477,7 @@ class ThoughtGenerator:
                         ...
                     ]
                 }
-            - progression_type (str): Type of progression to generate sub-thoughts 
+            - progression_type (ProgressionType | str): Type of progression to generate sub-thoughts
             (e.g., "simple_to_complex").
             - num_sub_thoughts (int): The number of sub-thoughts to generate for each concept.
             temperature (float, optional): Optional temperature setting for the LLM call.
@@ -532,6 +534,7 @@ class ThoughtGenerator:
         thoughts = input_data.get("thoughts", [])
         if not idea or not thoughts:
             raise ValueError("Invalid input data.")
+        progression_type = ProgressionType(progression_type)
 
         all_thoughts = []
         for thought in thoughts:

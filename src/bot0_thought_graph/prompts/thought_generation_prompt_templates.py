@@ -203,12 +203,19 @@ Progression Types:
 3. "chronological": If applicable, explain the evolution or historical development of the main thought.
 4. "problem_solution": Introduce problems or challenges related to the main thought, followed by
    their solutions or approaches.
+5. "prerequisite_dependency": Generate strict, directional prerequisites or
+   dependencies. Sub-thought A MUST be satisfied, completed, or understood
+   before Sub-thought B or the main thought can proceed.
 
 Instructions:
 1. Based on the specified progression type **{progression_type}**, determine the most appropriate
    starting point for explaining {thought}.
 2. For each subsequent step, explain the sub-thought that logically follows from the previous one,
    adhering to the chosen progression type.
+   When the progression type is "prerequisite_dependency", preserve strict
+   prerequisite direction: do not return merely related topics, parallel
+   alternatives, consequences, or chronological steps unless they are also
+   required prerequisites.
 3. For each step, provide:
    - A clear explanation of the sub-thought
    - Why it's important in the context of {thought}
@@ -262,10 +269,15 @@ You are an expert at vertically expanding one subtopic within a larger concept.
 
 Concept: "{idea}"
 Parent subtopic: "{thought}"
+Progression type: "{progression_type}"
 
-Identify exactly {num_sub_thoughts} direct child details of the parent subtopic.
-Each child must be more specific than the parent, remain within the concept, use consistent granularity,
-and avoid repeating the parent or introducing unrelated sibling-level dimensions.
+Identify exactly {num_sub_thoughts} implementation steps or key areas for the
+parent subtopic. Each child must remain within the concept, use consistent
+granularity, and avoid repeating the parent or introducing unrelated
+sibling-level dimensions.
+When the progression type is "prerequisite_dependency", each child must be a
+strict, directional prerequisite or dependency: it must be satisfied, completed,
+or understood before the parent thought can proceed.
 
 Return only valid JSON in this shape:
 {{

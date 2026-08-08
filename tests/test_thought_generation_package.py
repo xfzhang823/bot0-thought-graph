@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from bot0_thought_graph.models import IdeaJSONModel
+from bot0_thought_graph.models import IdeaJSONModel, ProgressionType
 from bot0_thought_graph.providers import GenerationRequest, GenerationResult, ProviderRequestError
 from bot0_thought_graph.storage import JsonRepository, MemoryRepository
 from bot0_thought_graph.thought_generation import (
@@ -62,6 +62,47 @@ def test_vertical_expansion_and_hierarchy_preserve_order():
     assert [item.sub_thought_index for item in indexed.thoughts[0].sub_thoughts] == [0, 1]
     assert ThoughtReader(idea).get_sub_thoughts_for_thought("hardware")[0]["name"] == "requirements"
     assert IndexedThoughtReader(indexed).get_sub_thoughts_for_thought(0)[1]["name"] == "design"
+
+
+def test_prerequisite_dependency_progression_is_accepted_and_instructed():
+    provider = FakeProvider([VERTICAL])
+    engine = ThoughtGraphEngine(provider)
+
+    engine.expand(
+        VerticalGenerationRequest(
+            idea="systems",
+            thought="hardware",
+            model="fake-model",
+            progression_type="prerequisite_dependency",
+        )
+    )
+
+    prompt = " ".join(provider.requests[0].prompt.split())
+    assert '"prerequisite_dependency"' in prompt
+    assert "MUST be satisfied, completed, or understood" in prompt
+    assert "strict prerequisite direction" in prompt
+
+
+def test_progression_type_defaults_and_normalizes_compatible_strings():
+    default_request = VerticalGenerationRequest(
+        idea="systems", thought="hardware", model="fake-model"
+    )
+    string_request = VerticalGenerationRequest(
+        idea="systems",
+        thought="hardware",
+        model="fake-model",
+        progression_type="prerequisite_dependency",
+    )
+
+    assert default_request.progression_type is ProgressionType.IMPLEMENTATION_STEPS
+    assert string_request.progression_type is ProgressionType.PREREQUISITE_DEPENDENCY
+    with pytest.raises(ValueError):
+        VerticalGenerationRequest(
+            idea="systems",
+            thought="hardware",
+            model="fake-model",
+            progression_type="not-a-progression",
+        )
 
 
 def test_expand_all_uses_deterministic_input_order():
