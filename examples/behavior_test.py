@@ -15,8 +15,8 @@ CONCEPT = "clinical research participant recruitment"
 PROVIDER = os.getenv("THOUGHT_GRAPH_PROVIDER", "openai").strip().lower()
 REQUEST_DELAY_SECONDS = float(os.getenv("BEHAVIOR_TEST_DELAY_SECONDS", "0"))
 MODEL_DEFAULTS = {
-    "openai": "gpt-5-mini-2025-08-07",
-    "gemini": "gemini-2.5-flash",
+    "openai": "gpt-5.6-luna",
+    "gemini": "gemini-3.6-flash",
     "deepseek": "deepseek-v4-flash",
 }
 
