@@ -56,6 +56,7 @@ def test_provider_contract_and_openai_adapter_without_network():
     assert isinstance(result, GenerationResult)
     assert result.text == "answer"
     assert completions.calls[0]["timeout"] == 4
+    assert "extra_body" not in completions.calls[0]
 
 
 def test_anthropic_adapter_and_malformed_responses():
@@ -175,6 +176,7 @@ def test_gemini_provider_uses_openai_compatible_base_url_and_api_key(monkeypatch
         {"role": "user", "content": "Explain systems"}
     ]
     assert provider.client.chat.completions.calls[0]["model"] == "test-model"
+    assert "extra_body" not in provider.client.chat.completions.calls[0]
     assert result.text == "gemini-answer"
 
 
@@ -216,8 +218,58 @@ def test_deepseek_provider_uses_openai_compatible_base_url_and_reasoning_separat
         {"role": "user", "content": "Explain systems"}
     ]
     assert provider.client.chat.completions.calls[0]["model"] == "test-model"
+    assert "extra_body" not in provider.client.chat.completions.calls[0]
     assert result.text == "final answer"
     assert result.reasoning_content == "hidden reasoning"
+
+
+@pytest.mark.parametrize(
+    ("thinking", "expected"),
+    [
+        (True, {"thinking": {"type": "enabled"}}),
+        (False, {"thinking": {"type": "disabled"}}),
+    ],
+)
+def test_deepseek_provider_sets_thinking_mode(thinking, expected):
+    deepseek_module = pytest.importorskip("bot0_thought_graph.providers.deepseek")
+    completions = FakeCompletions(
+        SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="answer"))])
+    )
+    provider = deepseek_module.DeepSeekProvider(
+        client=SimpleNamespace(chat=SimpleNamespace(completions=completions)),
+        thinking=thinking,
+    )
+
+    provider.generate(request())
+
+    assert completions.calls[0]["extra_body"] == expected
+
+
+def test_deepseek_provider_none_preserves_provider_default():
+    deepseek_module = pytest.importorskip("bot0_thought_graph.providers.deepseek")
+    completions = FakeCompletions(
+        SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="answer"))])
+    )
+    provider = deepseek_module.DeepSeekProvider(
+        client=SimpleNamespace(chat=SimpleNamespace(completions=completions)),
+        thinking=None,
+    )
+
+    provider.generate(request())
+
+    assert "extra_body" not in completions.calls[0]
+
+
+def test_deepseek_provider_rejects_invalid_thinking_value():
+    deepseek_module = pytest.importorskip("bot0_thought_graph.providers.deepseek")
+    completions = FakeCompletions()
+
+    with pytest.raises(TypeError, match="thinking must be True, False, or None"):
+        deepseek_module.DeepSeekProvider(
+            client=SimpleNamespace(chat=SimpleNamespace(completions=completions)),
+            thinking="enabled",
+        )
+    assert completions.calls == []
 
 
 def test_provider_factory_supports_gemini_and_deepseek(monkeypatch):
@@ -246,8 +298,27 @@ def test_openai_compatible_requests_use_completion_token_field_for_gpt5_models()
     kwargs = helper_module.build_chat_completion_kwargs(request)
     assert "temperature" not in kwargs
     assert "max_tokens" not in kwargs
-    assert kwargs["reasoning_effort"] == "minimal"
+    assert kwargs["reasoning_effort"] == "none"
     assert kwargs["max_completion_tokens"] == 42
+
+
+def test_openai_compatible_gpt5_reasoning_effort_can_be_overridden(monkeypatch):
+    helper_module = pytest.importorskip("bot0_thought_graph.providers.openai_compatible")
+    monkeypatch.setenv("OPENAI_REASONING_EFFORT", "xhigh")
+    request = GenerationRequest("Explain systems", "gpt-5.6-luna", max_tokens=42)
+    kwargs = helper_module.build_chat_completion_kwargs(request)
+    assert kwargs["reasoning_effort"] == "xhigh"
+
+
+def test_openai_compatible_extra_body_is_forwarded_without_affecting_defaults():
+    helper_module = pytest.importorskip("bot0_thought_graph.providers.openai_compatible")
+    request = GenerationRequest("Explain systems", "test-model", max_tokens=42)
+    kwargs = helper_module.build_chat_completion_kwargs(
+        request, extra_body={"example": {"enabled": True}}
+    )
+    assert kwargs["extra_body"] == {"example": {"enabled": True}}
+    assert kwargs["temperature"] == 0.7
+    assert kwargs["max_tokens"] == 42
 
 
 @pytest.mark.asyncio

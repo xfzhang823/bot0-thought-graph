@@ -21,6 +21,22 @@ MODEL_DEFAULTS = {
 }
 
 
+def parse_deepseek_thinking() -> bool | None:
+    """Parse the optional DeepSeek thinking-mode environment setting."""
+    value = os.getenv("DEEPSEEK_THINKING")
+    if value is None:
+        return None
+    normalized = value.strip().lower()
+    if normalized == "enabled":
+        return True
+    if normalized == "disabled":
+        return False
+    raise ValueError(
+        "Invalid DEEPSEEK_THINKING value: "
+        f"{value!r}. Use 'enabled' or 'disabled'."
+    )
+
+
 def build_provider() -> tuple[LLMProvider, str]:
     """Build the selected provider and resolve its provider-specific model."""
     try:
@@ -32,11 +48,9 @@ def build_provider() -> tuple[LLMProvider, str]:
         ) from exc
 
     model = os.getenv(f"{PROVIDER.upper()}_MODEL", default_model)
-    provider_classes = {
-        "openai": OpenAIProvider,
-        "gemini": GeminiProvider,
-        "deepseek": DeepSeekProvider,
-    }
+    if PROVIDER == "deepseek":
+        return DeepSeekProvider(thinking=parse_deepseek_thinking()), model
+    provider_classes = {"openai": OpenAIProvider, "gemini": GeminiProvider}
     return provider_classes[PROVIDER](), model
 
 
@@ -55,6 +69,16 @@ def main() -> None:
     print(f"Concept: {CONCEPT}")
     print(f"Provider: {PROVIDER}")
     print(f"Model: {model}")
+    if PROVIDER == "deepseek":
+        thinking = parse_deepseek_thinking()
+        label = (
+            "enabled"
+            if thinking is True
+            else "disabled"
+            if thinking is False
+            else "provider default"
+        )
+        print(f"Thinking: {label}")
 
     array = engine.generate_array_of_thoughts(CONCEPT, max_subtopics=6, max_tokens=4096)
     for index, thought in enumerate(array.thoughts, start=1):

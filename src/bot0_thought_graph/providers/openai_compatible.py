@@ -60,18 +60,25 @@ def build_async_client(
     return AsyncOpenAI(**kwargs)
 
 
-def build_chat_completion_kwargs(request: GenerationRequest) -> dict[str, Any]:
-    """Translate the package request into OpenAI chat-completions kwargs."""
+def build_chat_completion_kwargs(
+    request: GenerationRequest, *, extra_body: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Translate a package request into OpenAI chat-completions kwargs."""
     kwargs: dict[str, Any] = {
         "model": request.model,
         "messages": [{"role": "user", "content": request.prompt}],
     }
     if request.model.lower().startswith("gpt-5"):
-        kwargs["reasoning_effort"] = "minimal"
+        # ``minimal`` is not supported by every GPT-5-family model (for
+        # example, gpt-5.6-luna). ``none`` is broadly accepted and can be
+        # overridden when a caller wants the model to reason.
+        kwargs["reasoning_effort"] = os.getenv("OPENAI_REASONING_EFFORT", "none")
         kwargs["max_completion_tokens"] = request.max_tokens
     else:
         kwargs["temperature"] = request.temperature
         kwargs["max_tokens"] = request.max_tokens
+    if extra_body is not None:
+        kwargs["extra_body"] = extra_body
     if request.timeout is not None:
         kwargs["timeout"] = request.timeout
     return kwargs
