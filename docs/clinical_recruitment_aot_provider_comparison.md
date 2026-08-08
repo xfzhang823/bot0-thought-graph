@@ -4,19 +4,19 @@
 
 **Concept:** `clinical research participant recruitment`
 
-The original Array of Thoughts behavioral test was run against three provider/model combinations:
+The Array of Thoughts behavioral test was run against three provider/model combinations:
 
-| Provider      | Model              |
-| ------------- | ------------------ |
-| OpenAI        | `gpt-5.6-luna`     |
-| DeepSeek      | `deepseek-chat`    |
-| Google Gemini | `gemini-2.5-flash` |
+| Provider      | Model                                  |
+| ------------- | -------------------------------------- |
+| OpenAI        | `gpt-5.6-luna`                         |
+| DeepSeek      | `deepseek-v4-flash` (thinking enabled) |
+| Google Gemini | `gemini-2.5-flash`                     |
 
-> Note: the recorded DeepSeek result below uses the legacy `deepseek-chat` identifier. It is retained as historical evidence; it is not a V4 Flash thinking-mode result.
+> The DeepSeek result documented below uses `deepseek-v4-flash` with thinking mode explicitly enabled.
 
-## DeepSeek V4 Flash comparison procedure
+## DeepSeek V4 Flash Comparison Procedure
 
-The provider now supports explicit DeepSeek V4 Flash thinking-mode selection without changing the provider-neutral request contract. Both runs use the same model identifier:
+The provider supports explicit DeepSeek V4 Flash thinking-mode selection without changing the provider-neutral request contract. Both comparison runs use the same model identifier:
 
 ```text
 deepseek-v4-flash
@@ -24,13 +24,15 @@ deepseek-v4-flash
 
 The `DEEPSEEK_THINKING` environment variable controls the request:
 
-| Setting | DeepSeek request payload |
-| ------- | ------------------------ |
-| `enabled` | `extra_body={"thinking": {"type": "enabled"}}` |
-| `disabled` | `extra_body={"thinking": {"type": "disabled"}}` |
-| absent | No explicit toggle; preserve the provider default |
+| Setting    | DeepSeek request payload                          |
+| ---------- | ------------------------------------------------- |
+| `enabled`  | `extra_body={"thinking": {"type": "enabled"}}`    |
+| `disabled` | `extra_body={"thinking": {"type": "disabled"}}`   |
+| absent     | No explicit toggle; preserve the provider default |
 
-The behavioral test prints the selected mode so the output can be audited. The two controlled comparison runs are:
+The behavioral test prints the selected mode so the output can be audited.
+
+### Non-Thinking Run
 
 ```bash
 DEEPSEEK_THINKING=disabled \
@@ -38,6 +40,8 @@ THOUGHT_GRAPH_PROVIDER=deepseek \
 DEEPSEEK_MODEL=deepseek-v4-flash \
 python examples/behavior_test.py
 ```
+
+### Thinking Run
 
 ```bash
 DEEPSEEK_THINKING=enabled \
@@ -57,10 +61,12 @@ Thinking: enabled
 or:
 
 ```text
+Provider: deepseek
+Model: deepseek-v4-flash
 Thinking: disabled
 ```
 
-DeepSeek documents `thinking.type` as the mode toggle and returns thinking output separately as `reasoning_content`; the comparison should evaluate the parsed final content and retain reasoning metadata separately. See the [DeepSeek thinking-mode documentation](https://api-docs.deepseek.com/guides/thinking_mode).
+DeepSeek's thinking-mode API separates the mode toggle from the model identifier. The comparison should evaluate the parsed final content while retaining reasoning metadata separately.
 
 The behavioral test evaluates two core Array of Thoughts operations:
 
@@ -172,92 +178,93 @@ The measurement of recruitment outcomes, efficiency, representativeness, access,
 
 ---
 
-# 2. DeepSeek — DeepSeek Chat
+# 2. DeepSeek — DeepSeek V4 Flash (Thinking)
 
 **Provider:** DeepSeek
-**Model:** `deepseek-chat`
+**Model:** `deepseek-v4-flash`
+**Thinking:** enabled
 
 ## Horizontal Result
 
-### 1. Regulatory and Ethical Frameworks
+### 1. Regulatory and Ethical Framework
 
-Covers the laws, guidelines, and ethical principles governing recruitment, including informed consent, institutional review boards, data protection, and vulnerable population protections.
+Covers the laws, guidances, institutional review board oversight, informed consent requirements, privacy protections, and ethical treatment of vulnerable populations that shape recruitment practices.
 
-### 2. Recruitment Strategies and Outreach
+### 2. Protocol Design and Feasibility
 
-Encompasses methods and channels to identify and engage potential participants, such as community outreach, digital marketing, clinical trial registries, and partnerships with patient advocacy groups.
+Covers how study objectives, eligibility criteria, trial phases, procedures, visit burden, and target sample size influence the pool of eligible participants and the practicality of recruiting them.
 
-### 3. Patient Engagement and Retention
+### 3. Recruitment Strategies and Outreach
 
-Focuses on building trust, communicating study details, addressing patient concerns, and maintaining motivation and adherence throughout the trial to reduce dropout rates.
+Covers the methods and channels used to identify, reach, and encourage potential participants to inquire about a study, including community engagement, healthcare referrals, registries, media, and digital campaigns.
 
-### 4. Diversity, Equity, and Inclusion in Recruitment
+### 4. Site Operations and Enrollment Workflow
 
-Addresses the systematic inclusion of underrepresented populations, cultural competence, and strategies to overcome barriers related to race, ethnicity, gender, age, and socio-economic status.
+Covers the clinical site capabilities, staffing, training, screening and enrollment processes, coordination with care teams, and operational capacity needed to convert interest into formal enrollment.
 
-### 5. Data and Technology for Recruitment
+### 5. Participant Engagement and Experience
 
-Involves the use of electronic health records, predictive analytics, artificial intelligence, and digital platforms to identify eligible participants, streamline screening, and optimize recruitment efficiency.
+Covers communication, trust, barriers, incentives, cultural responsiveness, and the interpersonal factors that shape an individual's interest, willingness, and continued cooperation during the recruitment and enrollment process.
 
-### 6. Metrics, Monitoring, and Quality Management
+### 6. Data, Metrics, and Technology
 
-Covers the measurement of recruitment performance, benchmarking, tracking key performance indicators, and ensuring quality and compliance throughout the recruitment process.
+Covers recruitment intelligence, electronic health record and registry mining, digital platforms, tracking systems, and performance metrics used to plan, monitor, and improve recruitment across studies and sites.
 
 ## Vertical Direct-Child Results
 
-### Regulatory and Ethical Frameworks
+### Regulatory and Ethical Framework
 
-1. Institutional Review Board (IRB) Approval
-2. Informed Consent Process
-3. Vulnerable Population Protections
-4. HIPAA and Data Privacy Compliance
-5. Equitable Participant Selection
-6. Advertising and Recruitment Material Standards
+1. IRB/Ethics Committee Review of Recruitment Plans
+2. Informed Consent in Recruitment
+3. Review of Recruitment Advertising and Materials
+4. Privacy and Confidentiality Regulations
+5. Safeguards for Vulnerable Populations
+6. Equitable Participant Selection
+
+### Protocol Design and Feasibility
+
+1. Eligibility Criteria Development
+2. Recruitment Feasibility Assessment
+3. Participant Burden and Convenience
+4. Study Timeline and Enrollment Milestones
+5. Site Selection and Feasibility
+6. Study Design Complexity
 
 ### Recruitment Strategies and Outreach
 
-1. Digital and social media advertising
-2. Community-based partnerships and engagement
-3. Provider and clinician referrals
-4. Patient registries and database mining
-5. Direct mail and phone outreach
-6. In-person and event-based recruitment
+1. Community-Based Participatory Outreach
+2. Digital and Social Media Recruitment
+3. Clinical Trial Registries and Database Matching
+4. Provider Referral and Health System Outreach
+5. Patient Advocacy and Support Group Partnerships
+6. Culturally Tailored and Language-Specific Recruitment
 
-### Patient Engagement and Retention
+### Site Operations and Enrollment Workflow
 
-1. Tailored communication channels
-2. Incentive and compensation structures
-3. Patient feedback and satisfaction loops
-4. Peer support and community building
-5. Flexible visit scheduling and remote options
-6. Health literacy and educational materials
+1. Pre-screening and Eligibility Assessment
+2. Informed Consent Facilitation
+3. Screening and Baseline Visit Execution
+4. Randomization and Treatment Assignment
+5. Enrollment Documentation and Source Data
+6. Enrollment Pipeline Tracking and Reporting
 
-### Diversity, Equity, and Inclusion in Recruitment
+### Participant Engagement and Experience
 
-1. Culturally tailored outreach messaging
-2. Community-based participatory recruitment strategies
-3. Reducing implicit bias in eligibility criteria
-4. Addressing socioeconomic barriers to participation
-5. Inclusive digital recruitment practices
-6. Measurement and accountability for diversity goals
+1. Onboarding and Orientation
+2. Communication and Check-ins
+3. Visit Experience and Convenience
+4. Support and Resource Navigation
+5. Recognition and Reimbursement
+6. Feedback and Continuous Improvement
 
-### Data and Technology for Recruitment
+### Data, Metrics, and Technology
 
-1. Electronic Health Record (EHR) Screening Algorithms
-2. Patient Recruitment Registries and Matching Platforms
-3. Social Media and Digital Advertising Analytics
-4. Mobile Health (mHealth) and Wearable Device Data
-5. Predictive Modeling and Machine Learning for Participant Risk
-6. Decentralized Trial Technology and Remote Consent Tools
-
-### Metrics, Monitoring, and Quality Management
-
-1. Recruitment funnel metrics
-2. Real-time monitoring dashboards
-3. Site performance benchmarking
-4. Protocol feasibility and target feasibility reviews
-5. Quality assurance audits for recruitment processes
-6. Corrective and preventive actions (CAPA) for recruitment issues
+1. EHR Data Mining for Eligibility Screening
+2. Recruitment Performance Dashboards
+3. Predictive Modeling for Enrollment Forecasting
+4. Clinical Trial Management Systems (CTMS) Integration
+5. Digital Advertising and Social Media Analytics
+6. Patient Registry and Real-World Data Connectivity
 
 ---
 
@@ -376,43 +383,62 @@ Vertical generation should additionally preserve:
 
 ---
 
-## Summary Comparison
+## Condensed Thought Structure Comparison
 
+| Model                            | Horizontal Thought                               | Vertical Direct Children                                                                                                                               |
+| -------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **GPT-5.6 Luna**                 | Participant Eligibility and Targeting            | Inclusion Criteria; Exclusion Criteria; Target Population Profiling; Eligibility Prescreening; Eligibility Confirmation; Enrollment Feasibility        |
+|                                  | Recruitment Sources and Access Channels          | EHR/Clinical Registries; Provider Referrals; Community Recruitment; Digital/Social Media; Research Sites; Participant Referrals                        |
+|                                  | Recruitment Messaging and Communication          | Audience-Specific Messaging; Plain-Language Explanations; Message Channels; Culturally Responsive Communication; Message Compliance; Inquiry/Follow-Up |
+|                                  | Ethical and Regulatory Compliance                | Informed Consent; IRB Approval; Privacy/Confidentiality; Non-Coercive Recruitment; Vulnerable Population Protections; Recordkeeping/Reporting          |
+|                                  | Enrollment Experience and Participant Engagement | Participant-Friendly Information; Consent Experience; Enrollment Usability; Communication Touchpoints; Trust Building; Retention Handoff               |
+|                                  | Recruitment Performance and Equity               | Enrollment Rate; Source Effectiveness; Screening-to-Enrollment Conversion; Cost Efficiency; Representation; Equitable Access                           |
+| **DeepSeek V4 Flash (thinking)** | Regulatory and Ethical Framework                 | IRB/Ethics Review; Informed Consent; Recruitment Advertising Review; Privacy/Confidentiality; Vulnerable Population Safeguards; Equitable Selection    |
+|                                  | Protocol Design and Feasibility                  | Eligibility Criteria; Recruitment Feasibility; Participant Burden; Enrollment Milestones; Site Feasibility; Design Complexity                          |
+|                                  | Recruitment Strategies and Outreach              | Community Outreach; Digital/Social Recruitment; Registries/Database Matching; Provider Referrals; Advocacy Partnerships; Tailored Recruitment          |
+|                                  | Site Operations and Enrollment Workflow          | Pre-screening; Consent Facilitation; Screening/Baseline Visits; Randomization; Enrollment Documentation; Pipeline Tracking                             |
+|                                  | Participant Engagement and Experience            | Onboarding; Communication; Visit Convenience; Support Navigation; Reimbursement; Feedback                                                              |
+|                                  | Data, Metrics, and Technology                    | EHR Eligibility Screening; Performance Dashboards; Enrollment Forecasting; CTMS Integration; Digital Analytics; Registry/Real-World Data               |
+| **Gemini 2.5 Flash**             | Target Population Definition                     | Inclusion Criteria; Exclusion Criteria; Demographics; Disease Phenotyping; Treatment History; Geographic/Logistical Accessibility                      |
+|                                  | Recruitment Strategy & Design                    | Population Profiling; Channel Selection; Recruitment Materials; Stakeholder Engagement; Pre-Screening Workflow; Incentive Design                       |
+|                                  | Outreach & Engagement Mechanisms                 | Community Outreach; Digital/Social Campaigns; Provider Referrals; Registries/Databases; Direct-to-Patient Advertising; Advocacy Groups                 |
+|                                  | Screening & Enrollment Pathway                   | Pre-Screening; Informed Consent; Clinical Eligibility Assessment; Baseline Assessment; Study Allocation; Formal Enrollment                             |
+|                                  | Ethical & Regulatory Compliance                  | IRB/EC Approval; Ethical Consent; Vulnerable Populations; Advertising Compliance; Coercion/Inducement; Privacy                                         |
+|                                  | Performance Monitoring & Optimization            | KPI Tracking; Funnel Conversion; Source ROI; Site Benchmarking; Intervention Effectiveness; Enrollment Forecasting                                     |
 
-### Condensed Thought Structure Comparison
+## Performance Summary
 
-| Model                | Horizontal Thought                               | Vertical Direct Children                                                                                                                                   |
-| -------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **GPT-5.6 Luna**     | Participant Eligibility and Targeting            | Inclusion Criteria; Exclusion Criteria; Target Population Profiling; Eligibility Prescreening; Eligibility Confirmation; Enrollment Feasibility            |
-|                      | Recruitment Sources and Access Channels          | EHR/Clinical Registries; Provider Referrals; Community Recruitment; Digital/Social Media; Research Sites; Participant Referrals                            |
-|                      | Recruitment Messaging and Communication          | Audience-Specific Messaging; Plain-Language Explanations; Message Channels; Culturally Responsive Communication; Message Compliance; Inquiry/Follow-Up     |
-|                      | Ethical and Regulatory Compliance                | Informed Consent; IRB Approval; Privacy/Confidentiality; Non-Coercive Recruitment; Vulnerable Population Protections; Recordkeeping/Reporting              |
-|                      | Enrollment Experience and Participant Engagement | Participant-Friendly Information; Consent Experience; Enrollment Usability; Communication Touchpoints; Trust Building; Retention Handoff                   |
-|                      | Recruitment Performance and Equity               | Enrollment Rate; Source Effectiveness; Screening-to-Enrollment Conversion; Cost Efficiency; Representation; Equitable Access                               |
-| **DeepSeek Chat**    | Regulatory and Ethical Frameworks                | IRB Approval; Informed Consent; Vulnerable Population Protections; HIPAA/Data Privacy; Equitable Selection; Advertising Standards                          |
-|                      | Recruitment Strategies and Outreach              | Digital/Social Advertising; Community Partnerships; Clinician Referrals; Registries/Databases; Mail/Phone; Events                                          |
-|                      | Patient Engagement and Retention                 | Communication Channels; Incentives; Feedback; Peer Support; Flexible Scheduling; Health Literacy                                                           |
-|                      | Diversity, Equity, and Inclusion                 | Culturally Tailored Messaging; Community-Based Recruitment; Eligibility Bias; Socioeconomic Barriers; Inclusive Digital Recruitment; Diversity Measurement |
-|                      | Data and Technology                              | EHR Screening; Matching Platforms; Digital Analytics; mHealth/Wearables; Predictive Modeling; Decentralized Trial Technology                               |
-|                      | Metrics, Monitoring, and Quality                 | Funnel Metrics; Dashboards; Site Benchmarking; Feasibility Reviews; QA Audits; CAPA                                                                        |
-| **Gemini 2.5 Flash** | Target Population Definition                     | Inclusion Criteria; Exclusion Criteria; Demographics; Disease Phenotyping; Treatment History; Geographic/Logistical Accessibility                          |
-|                      | Recruitment Strategy & Design                    | Population Profiling; Channel Selection; Recruitment Materials; Stakeholder Engagement; Pre-Screening Workflow; Incentive Design                           |
-|                      | Outreach & Engagement Mechanisms                 | Community Outreach; Digital/Social Campaigns; Provider Referrals; Registries/Databases; Direct-to-Patient Advertising; Advocacy Groups                     |
-|                      | Screening & Enrollment Pathway                   | Pre-Screening; Informed Consent; Clinical Eligibility Assessment; Baseline Assessment; Study Allocation; Formal Enrollment                                 |
-|                      | Ethical & Regulatory Compliance                  | IRB/EC Approval; Ethical Consent; Vulnerable Populations; Advertising Compliance; Coercion/Inducement; Privacy                                             |
-|                      | Performance Monitoring & Optimization            | KPI Tracking; Funnel Conversion; Source ROI; Site Benchmarking; Intervention Effectiveness; Enrollment Forecasting                                         |
+| Criterion                         | GPT-5.6 Luna | DeepSeek V4 Flash (thinking) | Gemini 2.5 Flash |
+| --------------------------------- | ------------ | ---------------------------- | ---------------- |
+| Horizontal consistency            | Very strong  | Strong                       | Very strong      |
+| Structural fundamentality         | Strong       | Strong                       | **Very strong**  |
+| Vertical parent-child consistency | Very strong  | **Very strong**              | **Very strong**  |
+| Coverage                          | Very strong  | Very strong                  | Very strong      |
+| Granularity consistency           | Strong       | Strong                       | **Very strong**  |
+| Cross-branch separation           | Strong       | Strong                       | Strong           |
+| Process structure                 | Strong       | Strong                       | **Very strong**  |
 
+## Quantitative Benchmark
 
-### Performance Summary
-| Criterion                         | GPT-5.6 Luna | DeepSeek Chat | Gemini 2.5 Flash |
-| --------------------------------- | ------------ | ------------- | ---------------- |
-| Horizontal consistency            | Very strong  | Moderate      | Very strong      |
-| Structural fundamentality         | Strong       | Moderate      | **Very strong**  |
-| Vertical parent-child consistency | Very strong  | Strong        | **Very strong**  |
-| Coverage                          | Very strong  | Strong        | Very strong      |
-| Granularity consistency           | Strong       | Moderate      | **Very strong**  |
-| Cross-branch separation           | Strong       | Moderate      | Strong           |
-| Process structure                 | Strong       | Moderate      | **Very strong**  |
+The current behavioral runs primarily capture qualitative structure. Future controlled runs should record runtime and token usage so structural quality can be evaluated together with cost and latency.
+
+| Model             | Thinking | Latency | Input Tokens | Output Tokens | Estimated Cost | Structural Score |
+| ----------------- | -------- | ------: | -----------: | ------------: | -------------: | ---------------: |
+| GPT-5.6 Luna      | —        |     TBD |          TBD |           TBD |            TBD |              TBD |
+| Gemini 2.5 Flash  | —        |     TBD |          TBD |           TBD |            TBD |              TBD |
+| DeepSeek V4 Flash | disabled |     TBD |          TBD |           TBD |            TBD |              TBD |
+| DeepSeek V4 Flash | enabled  |     TBD |          TBD |           TBD |            TBD |              TBD |
+
+Useful derived metrics should eventually include:
+
+* output tokens per generated thought
+* total tokens per complete horizontal + vertical run
+* estimated cost per complete run
+* latency per provider call
+* total test latency
+* structural score per dollar
+
+These measurements would allow the benchmark to distinguish raw model quality from **quality per unit cost**.
 
 ---
 
@@ -469,70 +495,85 @@ Those concepts are individually relevant, but they are not necessarily one intri
 
 **Compact, operational, disciplined, generally hierarchical.**
 
-### Preliminary assessment
+### Preliminary Assessment
 
 One of the strongest results in this test. Luna appears particularly good at avoiding excessive thematic branching.
 
 ---
 
-# DeepSeek Analysis
+# DeepSeek V4 Flash Thinking Analysis
 
-DeepSeek generates individually relevant topics, but its horizontal ontology is less structurally fundamental.
+DeepSeek V4 Flash in thinking mode produces a substantially process-oriented hierarchy.
 
-The largest issue is the elevation of:
-
-```text
-Diversity, Equity, and Inclusion in Recruitment
-```
-
-and:
+Its horizontal structure is:
 
 ```text
-Data and Technology for Recruitment
+Regulatory and Ethical Framework
+Protocol Design and Feasibility
+Recruitment Strategies and Outreach
+Site Operations and Enrollment Workflow
+Participant Engagement and Experience
+Data, Metrics, and Technology
 ```
 
-to top-level sibling status.
+These branches cover the major constraints, planning decisions, execution workflow, participant experience, and operational feedback loop involved in clinical research participant recruitment.
 
-Both are relevant to recruitment, but they behave more like **cross-cutting concerns, methods, or implementation characteristics** than fundamental components of the recruitment process.
-
-For example, technology can appear throughout:
+The strongest improvement is the explicit separation of:
 
 ```text
-Eligibility
-    → EHR screening
-
-Outreach
-    → digital advertising
-
-Screening
-    → matching platforms
-
-Enrollment
-    → remote consent
-
-Monitoring
-    → analytics
+Protocol Design and Feasibility
+Site Operations and Enrollment Workflow
 ```
 
-Similarly, representativeness and access can appear across targeting, outreach, ethics, operational accessibility, and performance measurement.
+This gives the hierarchy a clearer operational backbone. Eligibility criteria, recruitment feasibility, participant burden, screening, consent, enrollment documentation, and pipeline tracking appear as direct children of appropriate parents rather than being scattered across broad themes.
 
-Promoting these concerns to the same level as recruitment strategy or regulatory requirements therefore weakens the ontology.
+The vertical results are also tightly scoped. For example:
 
-Another weakness is the absence of explicit first-level dimensions for:
+```text
+Site Operations and Enrollment Workflow
+    → Pre-screening and Eligibility Assessment
+    → Informed Consent Facilitation
+    → Screening and Baseline Visit Execution
+    → Enrollment Documentation and Source Data
+```
 
-* target population / eligibility
-* screening
-* consent / enrollment
+This is a coherent parent-child progression from site workflow to specific enrollment activities.
 
-These are core components of participant recruitment but are distributed indirectly across other branches.
+The primary structural weakness is:
+
+```text
+Data, Metrics, and Technology
+```
+
+This branch combines at least two different conceptual dimensions:
+
+```text
+Technology / infrastructure
+    → EHR data mining
+    → CTMS integration
+    → registry connectivity
+
+Measurement / analytics
+    → dashboards
+    → forecasting
+    → advertising analytics
+```
+
+Both groups are relevant, but combining implementation technology with measurement and analytics makes this horizontal branch less conceptually pure than the strongest branches in the hierarchy.
+
+There are also a few instances of scope leakage. `Randomization and Treatment Assignment`, for example, can reasonably be considered downstream of recruitment and enrollment rather than a recruitment activity itself.
+
+Despite these issues, the overall hierarchy is substantially more structurally grounded than the earlier DeepSeek output.
 
 ### Character
 
-**Thematic and technology/policy-oriented rather than structurally decompositional.**
+**Process-oriented, operationally coherent, with a small amount of cross-cutting aggregation.**
 
-### Preliminary assessment
+### Preliminary Assessment
 
-The vertical outputs are generally strong once a parent has been selected, but the **horizontal decomposition is the weakest of the three models** in this run.
+DeepSeek V4 Flash thinking mode produces strong horizontal structure, very strong direct-child relationships, and broad coverage.
+
+The result suggests that explicit thinking mode may materially improve structural decomposition. A paired non-thinking run is required before attributing that improvement confidently to thinking mode itself.
 
 ---
 
@@ -566,7 +607,7 @@ Screening & Enrollment Pathway
 
 branch.
 
-This captures a scientifically and operationally important part of clinical recruitment that neither Luna nor DeepSeek isolates as clearly.
+This captures a scientifically and operationally important part of clinical recruitment. DeepSeek also isolates this operational structure, although through its separate protocol-feasibility and site-operations branches.
 
 Its `Target Population Definition` branch is particularly strong:
 
@@ -611,53 +652,62 @@ The distinction is defensible, although the prompt could potentially sharpen it 
 
 **Process-oriented, structurally coherent, and consistently hierarchical.**
 
-### Preliminary assessment
+### Preliminary Assessment
 
 Gemini produces the strongest overall hierarchy in this particular run.
 
 ---
 
-# Preliminary Ranking
+# Preliminary Ordering
 
-Based strictly on this behavioral sample:
+Based strictly on these individual behavioral samples, the current qualitative ordering is:
 
-## 1. Gemini 2.5 Flash
+```text
+Gemini 2.5 Flash
+> DeepSeek V4 Flash (thinking)
+> GPT-5.6 Luna
+```
 
-Best overall structural decomposition.
+This should **not** yet be interpreted as a robust provider or model ranking.
 
-Strengths:
+The differences between the three outputs are relatively small, and each configuration is represented by only one behavioral sample. Normal generation variability could change the ordering across repeated runs.
 
-* clear fundamental dimensions
-* explicit screening/enrollment pathway
-* strong vertical parent-child relationships
-* consistent granularity
-* good functional separation
+### Gemini 2.5 Flash
 
-## 2. GPT-5.6 Luna
+The strongest aspect of the Gemini result is its explicit functional structure:
 
-Very close to Gemini and stronger than the earlier GPT-5 mini result.
+* target population
+* recruitment strategy
+* outreach
+* screening and enrollment
+* regulatory compliance
+* performance monitoring
 
-Strengths:
+It also maintains particularly consistent vertical granularity.
 
-* disciplined horizontal decomposition
-* strong vertical consistency
-* concise, operational categorization
-* little obvious semantic drift
+### DeepSeek V4 Flash (Thinking)
 
-Primary weakness:
+DeepSeek's thinking-mode result has a strong operational backbone:
 
-* some compound branches such as `Recruitment Performance and Equity`
-* recruitment and retention concepts occasionally blend
+* protocol design and feasibility
+* recruitment strategy
+* site operations
+* participant engagement
+* measurement and technology
 
-## 3. DeepSeek Chat
+Its principal weakness is the compound `Data, Metrics, and Technology` branch.
 
-Produces strong individual thoughts but the weakest horizontal ontology.
+### GPT-5.6 Luna
 
-Primary weaknesses:
+Luna produces a disciplined and concise hierarchy with strong vertical consistency.
 
-* promotes cross-cutting themes to top-level dimensions
-* lacks explicit eligibility and screening/enrollment branches
-* mixes fundamental structure with technology and policy themes
+Its primary weaknesses are:
+
+* compound branches such as `Recruitment Performance and Equity`
+* some blending of recruitment and retention
+* less explicit process staging than Gemini
+
+Its concision may nevertheless become an important advantage once output-token usage and total cost are measured.
 
 ---
 
@@ -672,11 +722,9 @@ vertical = more-specific decomposition beneath a selected parent
 
 The main difference is **not whether the models can generate relevant thoughts**.
 
-The important difference is:
+The more discriminating question is:
 
 > **How well does each model identify the fundamental structure of the concept?**
-
-That appears to be the more discriminating evaluation criterion.
 
 A model can produce six highly relevant topics while still constructing a weak ontology if those topics represent different kinds of things, such as:
 
@@ -696,37 +744,45 @@ This suggests that **structural fundamentality should be added permanently to th
 
 # Current Conclusion
 
-This historical run provides encouraging evidence that `bot0-thought-graph` can produce useful provider-independent hierarchical decomposition.
+This comparison provides encouraging evidence that `bot0-thought-graph` can produce useful provider-independent hierarchical decomposition.
 
-The preliminary ordering is:
+All three tested models generated recognizable horizontal peer structures and generally valid vertical direct-child relationships.
 
-```text
-Gemini 2.5 Flash
-≈ GPT-5.6 Luna
-> DeepSeek Chat
-```
+The strongest qualitative result in this single-sample comparison is Gemini 2.5 Flash, followed closely by DeepSeek V4 Flash with thinking enabled and GPT-5.6 Luna.
 
-The difference between Gemini and Luna is relatively small and should not yet be treated as conclusive.
+However, the current evidence is not sufficient to establish a definitive provider ranking.
 
-The DeepSeek result shows a more meaningful structural weakness, but this run should not be considered the final DeepSeek comparison because it used:
-
-```text
-deepseek-chat
-```
-
-rather than the current V4 Flash benchmark model:
-
-```text
-deepseek-v4-flash
-```
-
-The next controlled comparison should therefore use the same concept and generation settings with both DeepSeek V4 Flash modes:
+The next controlled comparison should include:
 
 ```text
 GPT-5.6 Luna
-Gemini 3.6 Flash
+Gemini 2.5 Flash
 DeepSeek V4 Flash (non-thinking)
 DeepSeek V4 Flash (thinking)
 ```
 
-and ideally repeat each model several times before drawing a final provider-level conclusion.
+The DeepSeek enabled/disabled pair is particularly valuable because it holds constant:
+
+```text
+provider
+model
+concept
+prompt
+breadth
+generation API
+```
+
+while changing only the thinking-mode configuration.
+
+Repeated runs should then collect both structural-quality scores and quantitative measurements:
+
+```text
+structural quality
+latency
+input tokens
+output tokens
+estimated API cost
+quality per dollar
+```
+
+That will allow the benchmark to move from a single-sample qualitative comparison toward a repeatable evaluation of **hierarchical quality, efficiency, and provider economics**.
