@@ -30,14 +30,20 @@ class InterviewEngine:
         reflection_service: ReflectionService | None = None,
         exhaustion_policy: TopicExhaustionPolicy | None = None,
     ) -> None:
-        self.provider = provider
-        self.model = model
-        self.thought_engine = thought_engine
-        self.repository = repository
-        self.question_service = question_service or QuestionGenerationService(provider, model=model)
-        self.evaluation_service = evaluation_service or EvaluationService(provider, model=model)
-        self.reflection_service = reflection_service or ReflectionService()
-        self.exhaustion_policy = exhaustion_policy or TopicExhaustionPolicy()
+        self.provider: LLMProvider = provider
+        self.model: str = model
+        self.thought_engine: Any | None = thought_engine
+        self.repository: Repository[Any] | None = repository
+        self.question_service: QuestionGenerationService = question_service or QuestionGenerationService(
+            provider,
+            model=model,
+        )
+        self.evaluation_service: EvaluationService = evaluation_service or EvaluationService(
+            provider,
+            model=model,
+        )
+        self.reflection_service: ReflectionService = reflection_service or ReflectionService()
+        self.exhaustion_policy: TopicExhaustionPolicy = exhaustion_policy or TopicExhaustionPolicy()
 
     def start(self, context: InterviewContext | IndexedIdeaJSONModel | IdeaJSONModel) -> InterviewSession:
         if isinstance(context, IdeaJSONModel):
@@ -46,7 +52,10 @@ class InterviewEngine:
             context = InterviewContext(idea_data=context)
         if not has_current_sub_thought(context.idea_data, 0, 0):
             raise ValueError("Interview context contains no sub-thoughts")
-        sub_thought = context.idea_data.thoughts[0].sub_thoughts[0]
+        self.exhaustion_policy.reset()
+        first_thought = context.idea_data.thoughts[0]
+        first_sub_thoughts = first_thought.sub_thoughts or []
+        sub_thought = first_sub_thoughts[0]
         question = self.question_service.initial(
             topic_name=sub_thought.name,
             context_text=sub_thought.description,
@@ -64,7 +73,8 @@ class InterviewEngine:
             raise ValueError("Interview session has no current question")
         graph = session.context.idea_data
         thought = graph.thoughts[session.thought_index]
-        sub_thought = (thought.sub_thoughts or [])[session.sub_thought_index]
+        sub_thoughts = thought.sub_thoughts or []
+        sub_thought = sub_thoughts[session.sub_thought_index]
         evaluation = self.evaluation_service.evaluate(
             question=session.current_question,
             answer=answer,
@@ -83,15 +93,23 @@ class InterviewEngine:
         session.current_evaluation = evaluation
         session.evaluations.append(evaluation)
         session.session_metadata.total_interactions += 1
-        logs = [{"role": "agent", "message": turn.question} for turn in session.turns]
-        logs.extend({"role": "user", "message": turn.answer} for turn in session.turns)
-        self.exhaustion_policy.set_scoped_logs(logs)
+        logs: list[dict[str, str]] = []
+        for turn in session.turns:
+            logs.append({"role": "agent", "message": turn.question})
+            logs.append({"role": "user", "message": turn.answer})
+        # The exhaustion policy measures redundancy against previously-given
+        # answers; exclude the just-appended turn so the current answer is not
+        # compared against itself (it is appended internally by the policy).
+        self.exhaustion_policy.set_scoped_logs(logs[:-2])
         exhaustion = self.exhaustion_policy.evaluate(answer)
         session.exhaustion_state = exhaustion
         location = next_location(graph, session.thought_index, session.sub_thought_index)
         decision = self.reflection_service.decide(evaluation, has_next_topic=location is not None)
-        if exhaustion["is_exhausted"] and location is not None:
-            decision = decision.model_copy(update={"action": "advance", "reason": "Topic exhaustion threshold reached."})
+        if exhaustion["is_exhausted"]:
+            if location is not None:
+                decision = decision.model_copy(update={"action": "advance", "reason": "Topic exhaustion threshold reached."})
+            else:
+                decision = decision.model_copy(update={"action": "complete", "reason": "Topic exhaustion threshold reached; no remaining topics."})
         if decision.action in {"advance", "complete"}:
             if location is None:
                 session.status = "completed"
@@ -105,7 +123,9 @@ class InterviewEngine:
                     decision_reason=decision.reason,
                 )
             session.thought_index, session.sub_thought_index = location
-            next_sub_thought = graph.thoughts[location[0]].sub_thoughts[location[1]]
+            next_thought = graph.thoughts[location[0]]
+            next_sub_thoughts = next_thought.sub_thoughts or []
+            next_sub_thought = next_sub_thoughts[location[1]]
             next_question = self.question_service.initial(
                 topic_name=next_sub_thought.name,
                 context_text=next_sub_thought.description,

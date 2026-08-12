@@ -3,13 +3,14 @@
 The stable top-level entry points are:
 
 - `ThoughtGraphEngine` for concept-first horizontal subtopics, vertical expansion, bounded thought graphs, named-provider or provider-injected generation, indexing, and explicit saving.
-- `Thought`, `ThoughtArray`, `ThoughtNode`, and `ThoughtGraph` as the structured concept-first result models.
+- `Thought`, `ThoughtArray`, `ThoughtNode`, and `ThoughtGraph` as the structured concept-first result models, plus the `ProgressionType` vertical-progression enum.
 - `InterviewEngine` for typed, headless interview sessions and explicit session saving.
-- `InterviewCoordinator` as a thin delegation layer for applications.
 - `LLMProvider` and `AsyncLLMProvider` protocols for custom providers.
 - `MemoryRepository` and `JsonRepository` for optional caller-selected persistence.
 
 Requests, models, policies, and adapter classes are available from their subpackages. Provider SDK adapters are lazy and require the `providers` extra; fake/custom providers require no SDK client construction.
+
+The package root no longer re-exports the thin interview controller/policy wrappers. They remain available from the `bot0_thought_graph.interview` and `bot0_thought_graph.orchestration` submodules for compatibility, but they are not part of the canonical top-level API.
 
 The package is synchronous at its public engine boundary. It has no global clients, repository-root discovery, automatic persistence, or import-time network/filesystem behavior. Callers may extend it by implementing `LLMProvider` or `Repository` and injecting those objects.
 
@@ -35,16 +36,20 @@ graph = generator.generate_thought_graph(
 `provider` accepts `"openai"`, `"gemini"`, `"deepseek"`, or `"anthropic"`.
 Named providers are created through the existing provider factory. Set
 `model=None` to use the package default, with `<PROVIDER>_MODEL` taking
-precedence. The returned value is always the package-owned `ThoughtGraph`
-model, independent of the provider SDK.
+precedence. Defaults are resolved by `bot0_thought_graph.providers.default_model(provider)`:
+OpenAI `gpt-5.6-luna`, Gemini `gemini-3.6-flash`, DeepSeek `deepseek-v4-flash`,
+Anthropic `claude-3-5-sonnet-20241022`. The returned value is always the
+package-owned `ThoughtGraph` model, independent of the provider SDK.
 
 `breadth` is the maximum number of horizontal siblings and the maximum number
 of children retained at each vertical expansion. `depth=1` returns the root
 plus its first horizontal layer; `depth=2` adds one vertical expansion beneath
 each first-level thought; `depth=3` adds a third generated child level. Depth
-is bounded by `ThoughtGraphEngine.MAX_FACADE_DEPTH`. The existing `concept=`
-parameter remains supported for compatibility. Results use Pydantic's standard
-`model_dump()` and `model_dump_json()` serialization.
+is bounded by `ThoughtGraphEngine.MAX_FACADE_DEPTH`. The `topic=` parameter is
+canonical; the existing `concept=` parameter remains supported as an alias
+(supply only one). Vertical expansion in `generate_thought_graph()` accepts
+`progression_type=` (default `ProgressionType.IMPLEMENTATION_STEPS`). Results
+use Pydantic's standard `model_dump()` and `model_dump_json()` serialization.
 
 Direct provider-object injection remains supported:
 
@@ -69,7 +74,7 @@ graph = engine.generate_thought_graph(
 
 Horizontal methods produce sibling-level major dimensions. Vertical expansion produces direct, more-specific children of one subtopic. `ThoughtArray` contains the concept and typed first-level `Thought` items. `ThoughtGraph` contains the concept, a `ThoughtNode` root, and recursive child nodes. `depth=1` means root plus first-level subtopics; `depth=2` adds one vertical expansion under each subtopic. `breadth` caps generated children. Graph generation performs one provider call for the horizontal expansion plus one call per expanded node and never persists implicitly.
 
-Set `ranked=True` on horizontal or graph methods to use the existing clustering/ranking path. Vertical expansion preserves provider order.
+Set `ranked=True` on horizontal or graph methods to use the existing clustering/ranking path. `expand_subtopic()` and `generate_thought_graph()` accept `progression_type=` (a `ProgressionType` member or its string value; default `ProgressionType.IMPLEMENTATION_STEPS`) to select the parent→child semantic relationship. `ProgressionType` (`implementation_steps`, `simple_to_complex`, `chronological`, `problem_solution`, `prerequisite_dependency`) is exported from `bot0_thought_graph` and `bot0_thought_graph.models`. Vertical expansion preserves provider order.
 
 ## Advanced typed API
 

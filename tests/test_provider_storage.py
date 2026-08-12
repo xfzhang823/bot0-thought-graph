@@ -375,3 +375,23 @@ def test_configuration_is_explicit_and_has_no_storage_default():
     config = Bot0Config(provider=ProviderConfig(provider="openai", model="test-model"))
     assert config.provider.model == "test-model"
     assert not hasattr(config, "storage_path")
+
+
+def test_default_model_resolves_per_provider_defaults(monkeypatch):
+    from bot0_thought_graph.providers import default_model
+
+    for name in ("openai", "gemini", "deepseek", "anthropic"):
+        monkeypatch.delenv(f"{name.upper()}_MODEL", raising=False)
+    assert default_model("openai") == "gpt-5.6-luna"
+    assert default_model("gemini") == "gemini-3.6-flash"
+    assert default_model("deepseek") == "deepseek-v4-flash"
+    assert default_model("anthropic") == "claude-3-5-sonnet-20241022"
+
+
+def test_default_model_env_override_and_unknown_provider(monkeypatch):
+    from bot0_thought_graph.providers import default_model
+
+    monkeypatch.setenv("DEEPSEEK_MODEL", "deepseek-v4-pro")
+    assert default_model("deepseek") == "deepseek-v4-pro"
+    with pytest.raises(ValueError):
+        default_model("unknown-provider")

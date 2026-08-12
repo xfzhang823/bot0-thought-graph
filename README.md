@@ -92,7 +92,7 @@ graph = engine.generate_thought_graph(
 
 `generate_subtopics()` and `generate_array_of_thoughts()` perform horizontal expansion: they return distinct major dimensions at a similar level of abstraction. `expand_subtopic()` performs one-level vertical expansion using implementation-step semantics by default. The convenience list methods return `list[str]`; structured methods return `ThoughtArray` and `ThoughtGraph`.
 
-Graph `depth=1` returns the root concept and its first-level subtopics. `depth=2` adds one vertical expansion under each first-level subtopic. The façade bounds depth at three child levels (`MAX_FACADE_DEPTH`), caps children at `breadth`, and makes one provider call per expanded node. Set `ranked=True` on horizontal or graph methods to route the first-level subtopics through the clustering/ranking pipeline. These methods do not persist results.
+Graph `depth=1` returns the root concept and its first-level subtopics. `depth=2` adds one vertical expansion under each first-level subtopic. The façade bounds depth at three child levels (`MAX_FACADE_DEPTH`), caps children at `breadth`, and makes one provider call per expanded node. Set `ranked=True` on horizontal or graph methods to route the first-level subtopics through the clustering/ranking pipeline. The vertical methods `expand_subtopic()` and `generate_thought_graph()` accept `progression_type=` — a `ProgressionType` member or its string value — to select the semantic relationship between a parent thought and its children; both default to `ProgressionType.IMPLEMENTATION_STEPS`. These methods do not persist results.
 
 ## Provider support
 
@@ -119,7 +119,7 @@ anthropic_provider = AnthropicProvider(client=my_anthropic_client)  # injected c
 provider = create_provider("deepseek", api_key="...")    # "openai" | "claude" | "anthropic" | "gemini" | "deepseek"
 ```
 
-Model identifiers are provider-specific strings passed through unchanged; no defaults are hard-coded into the adapters. Provider calls are normalized into `GenerationResult(text, provider, model, reasoning_content)`. For OpenAI-compatible providers that return reasoning (for example DeepSeek reasoning models), the reasoning text is preserved in `reasoning_content`.
+Model identifiers are provider-specific strings passed through unchanged. When a named provider is used with `model=None`, the engine resolves a per-provider default through `bot0_thought_graph.providers.default_model()` — OpenAI `gpt-5.6-luna`, Gemini `gemini-3.6-flash`, DeepSeek `deepseek-v4-flash`, Anthropic `claude-3-5-sonnet-20241022` — and a `<PROVIDER>_MODEL` environment variable (for example `DEEPSEEK_MODEL`) overrides the default. Provider calls are normalized into `GenerationResult(text, provider, model, reasoning_content)`. For OpenAI-compatible providers that return reasoning (for example DeepSeek reasoning models), the reasoning text is preserved in `reasoning_content`.
 
 Failures are raised as typed exceptions from `bot0_thought_graph.providers`: `ProviderError` (base), `ProviderRequestError` (request rejected), and `ProviderResponseError` (response could not be normalized).
 
@@ -195,9 +195,9 @@ turn = engine.process_answer(session, "The system should make requirements expli
 4. decides the next action (`ReflectionService`), and
 5. advances, completes, or asks a follow-up question.
 
-The returned `InterviewTurnResult` carries the evaluation, `next_question`, `topic_exhausted`, `completed`, and the `decision` (`"advance"`, `"follow_up"`, or `"complete"`) with its reason. Sessions and turn results are typed Pydantic models with no display or transport state.
+The returned `InterviewTurnResult` carries the evaluation, `next_question`, `topic_exhausted`, `completed`, and the `decision` (`"advance"`, `"follow_up"`, or `"complete"`) with its reason. Sessions and turn results are typed Pydantic models with no display or transport state. The thin `InterviewCoordinator` / `InterviewPolicy` wrapper lives under `bot0_thought_graph.orchestration` as a compatibility namespace rather than a top-level package export.
 
-Evaluation uses four criteria — `relevance`, `correctness`, `specificity`, `clarity` — scored 1–5 with explanations capped at 50 words. The default reflection policy advances when `correctness >= 4.5`; below the threshold it asks a clarifying follow-up. The `TopicExhaustionPolicy` (redundancy > 0.7 and new-information < 0.2) forces an advance when a topic is exhausted. All services are replaceable: `QuestionGenerationService`, `EvaluationService`, `ReflectionService`, and `TopicExhaustionPolicy` can be injected into `InterviewEngine`, and `InterviewPolicy` / `InterviewCoordinator` in `bot0_thought_graph.orchestration` provide a thin application-facing layer.
+Evaluation uses four criteria — `relevance`, `correctness`, `specificity`, `clarity` — scored 1–5 with explanations capped at 50 words. The default reflection policy advances when `correctness >= 4.5`; below the threshold it asks a clarifying follow-up. The `TopicExhaustionPolicy` (redundancy > 0.7 and new-information < 0.2) forces an advance when a topic is exhausted, or completes the session when no topics remain. All services are replaceable: `QuestionGenerationService`, `EvaluationService`, `ReflectionService`, and `TopicExhaustionPolicy` can be injected into `InterviewEngine`, and `InterviewPolicy` / `InterviewCoordinator` in `bot0_thought_graph.orchestration` provide a thin application-facing layer.
 
 ## Explicit persistence
 
@@ -221,7 +221,7 @@ engine.save_session(session)  # writes {chosen_directory}/{session_id}.json
 
 ## Models and prompts
 
-Public models live in `bot0_thought_graph.models`. Concept-first results (`Thought`, `ThoughtArray`, `ThoughtNode`, `ThoughtGraph`) are exported at the package top level; the legacy-schema JSON models (`IdeaJSONModel`, `ThoughtJSONModel`, `SubThoughtJSONModel`, indexed variants, cluster models), evaluation models (`EvaluationCriteria`, `EvaluationJSONModel`, `QuestionAnswerPair`), and provider-neutral response models (`TextResponse`, `SubConcept`, `JSONResponse`, `TabularResponse`, `CodeResponse`) are exported from the `models` subpackage, along with `validate_thought_batch()`.
+Public models live in `bot0_thought_graph.models`. Concept-first results (`Thought`, `ThoughtArray`, `ThoughtNode`, `ThoughtGraph`) and the vertical-progression `ProgressionType` enum are exported at the package top level; the legacy-schema JSON models (`IdeaJSONModel`, `ThoughtJSONModel`, `SubThoughtJSONModel`, indexed variants, cluster models), evaluation models (`EvaluationCriteria`, `EvaluationJSONModel`, `QuestionAnswerPair`), and provider-neutral response models (`TextResponse`, `SubConcept`, `JSONResponse`, `TabularResponse`, `CodeResponse`) are exported from the `models` subpackage, along with `validate_thought_batch()`.
 
 All prompt templates are public constants in `bot0_thought_graph.prompts` — horizontal/vertical generation, concept subtopic/detail prompts, clustering, and the interview evaluation and question-generation templates — and can be overridden per request via `prompt_template=`.
 
@@ -233,7 +233,7 @@ The package is organized into:
 - `bot0_thought_graph.providers` — `LLMProvider`/`AsyncLLMProvider` contracts, `GenerationRequest`/`GenerationResult`, error types, lazy SDK adapters, `create_provider`
 - `bot0_thought_graph.thought_generation` — `ThoughtGraphEngine`, horizontal/vertical generation, clustering and ranking, parsing, validation, indexing, in-memory readers
 - `bot0_thought_graph.interview` — `InterviewEngine`, question generation, evaluation, reflection, topic-exhaustion policy, typed session state
-- `bot0_thought_graph.orchestration` — thin `InterviewCoordinator` / `InterviewPolicy` delegation layer
+- `bot0_thought_graph.orchestration` — compatibility namespace for thin `InterviewCoordinator` / `InterviewPolicy` modules
 - `bot0_thought_graph.storage` — `Repository` contract, `JsonRepository`, `MemoryRepository`
 - `bot0_thought_graph.prompts` — public prompt templates
 - `bot0_thought_graph.config` — optional `ProviderConfig` / `Bot0Config` frozen dataclasses (storage is deliberately never implicit)

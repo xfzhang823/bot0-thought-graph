@@ -15,7 +15,6 @@ def test_public_top_level_api_is_small_and_importable():
     assert {
         "ThoughtGraphEngine",
         "InterviewEngine",
-        "InterviewCoordinator",
         "LLMProvider",
         "AsyncLLMProvider",
         "MemoryRepository",

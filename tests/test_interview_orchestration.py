@@ -125,3 +125,106 @@ def test_evaluation_and_exhaustion_boundaries():
     result = policy.evaluate("AI improves tasks")
     assert result["redundancy_score"] >= 0
     assert result["new_info_score"] >= 0
+
+
+SINGLE_SUB_THOUGHT = IndexedIdeaJSONModel.model_validate(
+    {
+        "idea": "systems",
+        "thoughts": [
+            {
+                "thought_index": 0,
+                "thought": "hardware",
+                "description": "Physical design",
+                "sub_thoughts": [
+                    {"sub_thought_index": 0, "name": "requirements", "description": "Define needs"}
+                ],
+            }
+        ],
+    }
+)
+
+
+def test_follow_up_context_logs_are_chronological():
+    provider = FakeProvider(["Initial", EVAL_LOW, "Follow-1", EVAL_LOW, "Follow-2"])
+    engine = InterviewEngine(provider, model="fake-model")
+    session = engine.start(GRAPH)
+    engine.process_answer(session, "answer one")
+    result = engine.process_answer(session, "answer two")
+    assert result.decision == "follow_up"
+    prompt = provider.requests[-1].prompt
+    assert "Agent: Initial\nUser: answer one" in prompt
+    assert "Agent: Follow-1\nUser: answer two" in prompt
+
+
+def test_topic_exhaustion_on_last_sub_thought_completes_session():
+    provider = FakeProvider(
+        [
+            "Initial question",
+            EVAL_LOW, "Follow-1",
+            EVAL_LOW, "Follow-2",
+            EVAL_LOW, "Follow-3",
+            EVAL_LOW, "Follow-4",
+        ]
+    )
+    engine = InterviewEngine(provider, model="fake-model")
+    session = engine.start(SINGLE_SUB_THOUGHT)
+    result = None
+    for _ in range(6):
+        result = engine.process_answer(session, "the same answer repeated over and over again")
+        session = result.session
+        if result.completed:
+            break
+    assert result is not None and result.completed
+    assert session.status == "completed"
+    assert result.topic_exhausted is True
+    assert result.decision_reason == "Topic exhaustion threshold reached; no remaining topics."
+
+
+def test_exhaustion_policy_reset_between_sessions():
+    policy = TopicExhaustionPolicy({"redundancy": 0.5, "new_info": 0.3})
+    provider = FakeProvider(["Q1", EVAL_HIGH])
+    engine = InterviewEngine(provider, model="fake-model", exhaustion_policy=policy)
+    first = engine.start(SINGLE_SUB_THOUGHT)
+    first_result = engine.process_answer(first, "alpha beta")
+    assert first_result.completed
+    provider.responses.extend(["Q2", EVAL_HIGH])
+    second = engine.start(SINGLE_SUB_THOUGHT)
+    second_result = engine.process_answer(second, "alpha beta")
+    assert second.exhaustion_state["is_exhausted"] is False
+    assert second_result.completed
+
+
+from bot0_thought_graph.interview.state import has_current_sub_thought, next_location
+from bot0_thought_graph.orchestration.coordinator import InterviewCoordinator
+from bot0_thought_graph.orchestration.policies import InterviewPolicy
+
+
+def test_state_traversal_helpers():
+    assert has_current_sub_thought(GRAPH, 0, 0) is True
+    assert has_current_sub_thought(GRAPH, 0, 1) is True
+    assert has_current_sub_thought(GRAPH, 0, 2) is False
+    assert has_current_sub_thought(GRAPH, 2, 0) is False
+    assert next_location(GRAPH, 0, 0) == (0, 1)
+    assert next_location(GRAPH, 0, 1) == (1, 0)
+    assert next_location(GRAPH, 1, 0) is None
+
+
+def test_interview_policy_defaults_and_override():
+    assert InterviewPolicy().correctness_threshold == 4.5
+    assert InterviewPolicy().max_follow_up_questions is None
+    assert InterviewPolicy(correctness_threshold=3.0).correctness_threshold == 3.0
+    assert InterviewPolicy(max_follow_up_questions=2).max_follow_up_questions == 2
+
+
+def test_coordinator_delegates_start_process_and_save():
+    repository = MemoryRepository()
+    provider = FakeProvider(["Initial question", EVAL_HIGH, "Next question", EVAL_HIGH, "Final question", EVAL_HIGH])
+    coordinator = InterviewCoordinator(
+        InterviewEngine(provider, model="fake-model", repository=repository)
+    )
+    session = coordinator.start(GRAPH)
+    assert session.current_question == "Initial question"
+    result = coordinator.process_answer(session, "one")
+    assert result.completed is False
+    coordinator.save_session(result.session)
+    assert repository.load(result.session.session_id)["status"] == "active"

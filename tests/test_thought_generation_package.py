@@ -146,3 +146,73 @@ def test_provider_output_schema_failure_is_reported():
     engine = ThoughtGraphEngine(FakeProvider(['{"idea":"systems","thoughts":[{"description":"missing name"}]}']))
     with pytest.raises(ValueError, match="Invalid idea thought graph"):
         engine.generate(HorizontalGenerationRequest(idea="systems", model="fake-model"))
+
+
+from bot0_thought_graph.models import IdeaClusterJSONModel
+from bot0_thought_graph.thought_generation.ranking import convert_clusters_to_idea, select_clusters
+
+
+def test_reader_surface_covers_idea_thoughts_and_descriptions():
+    idea = IdeaJSONModel.model_validate(
+        {
+            "idea": "systems",
+            "thoughts": [
+                {
+                    "thought": "hardware",
+                    "description": "Physical design",
+                    "sub_thoughts": [{"name": "requirements", "description": "Define needs"}],
+                }
+            ],
+        }
+    )
+    reader = ThoughtReader(idea)
+    assert reader.get_idea() == "systems"
+    assert reader.get_thoughts() == ["hardware"]
+    assert reader.get_thoughts_and_descriptions() == [
+        {"thought": "hardware", "description": "Physical design"}
+    ]
+    indexed = IndexedThoughtReader(index_idea(idea))
+    assert indexed.get_thoughts() == [{"thought_index": 0, "thought": "hardware"}]
+    assert indexed.get_thoughts_and_descriptions()[0]["description"] == "Physical design"
+    assert indexed.dump_all()["idea"] == "systems"
+
+
+def test_ranking_helpers_validate_and_convert_clusters():
+    with pytest.raises(ValueError, match="no clusters"):
+        convert_clusters_to_idea(IdeaClusterJSONModel(idea="systems", clusters=[]))
+    converted = convert_clusters_to_idea(
+        IdeaClusterJSONModel(
+            idea="systems",
+            clusters=[
+                {"name": "architecture", "description": "System structure", "thoughts": ["hardware", "software"]}
+            ],
+        )
+    )
+    assert converted.thoughts[0].thought == "architecture"
+    assert converted.thoughts[0].sub_thoughts is None
+
+
+def test_select_clusters_parses_provider_response_and_rejects_bad_shape():
+    provider = FakeProvider([CLUSTERS])
+    result = select_clusters(
+        provider,
+        IdeaJSONModel.model_validate(
+            {"idea": "systems", "thoughts": [{"thought": "hardware", "description": "Physical design"}]}
+        ),
+        model="fake-model",
+        num_clusters=1,
+        top_n=1,
+    )
+    assert result.clusters[0].name == "architecture"
+
+    bad = FakeProvider(['{"idea": "systems", "clusters": [{"name": "x"}]}'])
+    with pytest.raises(ValueError, match="Invalid cluster response"):
+        select_clusters(
+            bad,
+            IdeaJSONModel.model_validate(
+                {"idea": "systems", "thoughts": [{"thought": "hardware", "description": "Physical design"}]}
+            ),
+            model="fake-model",
+            num_clusters=1,
+            top_n=1,
+        )
