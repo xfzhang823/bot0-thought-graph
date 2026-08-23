@@ -4,8 +4,9 @@ import logging
 import logging_config
 import json
 from typing import Optional, Union
-from thought_generation.thought_generator import ThoughtGenerator
-from utils.generic_utils import read_from_json_file
+from bot0_thought_graph.thought_generation import ThoughtGraphEngine
+from bot0_thought_graph.thought_generation.validation import validate_idea
+from utils.generic_utils import read_from_json_file, save_to_json_file
 
 from project_config import (
     CLAUDE_OPUS,
@@ -76,24 +77,23 @@ def vertical_thought_wt_openai_pipeline(
         raise FileNotFoundError(f"Input data file {input_json_file} does not exist.")
 
     # Read horizontal sub thoughts from JSON
-    thoughts_data = read_from_json_file(input_json_file)
+    thoughts_data = validate_idea(read_from_json_file(input_json_file))
 
     logger.info(f"Data is read from JSON file:\n{thoughts_data}")
 
-    # Instantiate thought_generator class and process the method to create sub thoughts
-    # by iterating through the already created horizontal/parallel thoughts
-    thought_generator = ThoughtGenerator(
-        llm_provider=llm_provider, model_id=model_id, temperature=0.8
-    )
-    array_of_thoughts = thought_generator.generate_array_of_thoughts(
-        input_data=thoughts_data, num_sub_thoughts=num_of_sub_thoughts
+    engine = ThoughtGraphEngine(provider=llm_provider, model=model_id)
+    array_of_thoughts = engine.expand_all(
+        thoughts_data,
+        model=model_id,
+        num_sub_thoughts=num_of_sub_thoughts,
+        temperature=0.8,
     )
 
     logger.info(f"sub_thought_list: \n{array_of_thoughts}")  # debugging
 
     # Save results to file if json_file is provided
     if output_json_file:
-        thought_generator.save_results(array_of_thoughts, output_json_file)
+        save_to_json_file(data=array_of_thoughts, file_path=output_json_file)
 
     logger.info(f"Finished vertical thoughts generation pipeline with {llm_provider}.")
 
@@ -152,23 +152,22 @@ def vertical_thought_wt_claude_pipeline(
         raise FileNotFoundError(f"Input data file {input_json_file} does not exist.")
 
     # Read horizontal sub thoughts from JSON
-    thoughts_data = read_from_json_file(input_json_file)
+    thoughts_data = validate_idea(read_from_json_file(input_json_file))
 
     logger.info(f"Data is read from JSON file:\n{thoughts_data}")
 
-    # Instantiate thought_generator class and process the method to create sub thoughts
-    # by iterating through the already created horizontal/parallel thoughts
-    thought_generator = ThoughtGenerator(
-        llm_provider=llm_provider, model_id=model_id, temperature=0.8
-    )
-    array_of_thoughts = thought_generator.generate_array_of_thoughts(
-        input_data=thoughts_data, num_sub_thoughts=num_of_sub_thoughts
+    engine = ThoughtGraphEngine(provider=llm_provider, model=model_id)
+    array_of_thoughts = engine.expand_all(
+        thoughts_data,
+        model=model_id,
+        num_sub_thoughts=num_of_sub_thoughts,
+        temperature=0.8,
     )
 
     logger.info(f"sub_thought_list: \n{array_of_thoughts}")  # debugging
 
     # Save results to file if json_file is provided
     if output_json_file:
-        thought_generator.save_results(array_of_thoughts, output_json_file)
+        save_to_json_file(data=array_of_thoughts, file_path=output_json_file)
 
     logger.info(f"Finished vertical thoughts generation pipeline with {llm_provider}.")

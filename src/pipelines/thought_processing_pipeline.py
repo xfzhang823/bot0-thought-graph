@@ -1,22 +1,13 @@
-"""
-TBA
-"""
+"""Utilities for reading, indexing, and printing thought data."""
 
 from pathlib import Path
-from typing import Callable, Union, List, Dict
+from typing import Dict, List, Union
 import logging
+
 import logging_config
 
-from models.thought_models import IdeaJSONModel
-from models.indexed_thought_models import IndexedIdeaJSONModel
-from thought_generation.thought_reader import ThoughtReader, IndexedThoughtReader
-from thought_generation.thought_utils import generate_indexed_model_file
-
-from utils.generic_utils import (
-    read_from_json_file,
-    pretty_print_json,
-    save_to_json_file,
-)
+from bot0_thought_graph.thought_generation import IndexedThoughtReader, ThoughtReader
+from utils.generic_utils import read_from_json_file
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +17,7 @@ def unindexed_thought_processing_pipeline(json_file: Union[Path, str]):
     *This pipeline is intended for analysis and QA data!
     """
 
-    # Initialize ThoughtReader with your JSON file
-    thought_reader = ThoughtReader(json_file)
+    thought_reader = ThoughtReader(read_from_json_file(json_file))
 
     # Fetch the main idea or theme of the thoughts data
     main_idea = thought_reader.get_idea()
@@ -65,20 +55,14 @@ def unindexed_thought_processing_pipeline(json_file: Union[Path, str]):
 def indexed_thought_processing_pipeline(
     indexed_model_file: Union[Path, str],
     thought_index: int = 0,
-    # sub_thought_index: int = None,
-    reader: Callable[[Union[Path, str]], "IndexedThoughtReader"] = IndexedThoughtReader,
 ) -> List[Dict[str, Union[str, int, None]]]:
     """
     A pipeline function that reads an unindexed model file, creates an indexed model file,
     and retrieves thought and sub-thought details for a specified thought index.
 
     Args:
-        - indexed_model_file (Union[Path, str]): Path where the indexed model JSON file will be saved.
+        - indexed_model_file (Union[Path, str]): Path to the indexed model JSON file.
         - thought_index (int, optional): The index of the thought to retrieve sub-thoughts for. Defaults to 0.
-        - sub_thought_index (int, optional): The index of the sub_thought. Defaults to 0.
-        - reader (Callable[[Union[Path, str]], IndexedThoughtReader], optional):
-            A callable to instantiate the reader that can access the indexed model.
-            Defaults to `IndexedThoughtReader`.
 
     Returns:
         List[Dict[str, Union[str, int, None]]]: A list of dictionaries containing details for each
@@ -86,15 +70,13 @@ def indexed_thought_processing_pipeline(
         `description`, `importance`, and `connection_to_next`.
 
     Workflow:
-        - Converts paths to Path objects for consistency.
-        - Uses `make_indexed_file` to generate the indexed model file from the unindexed model.
-        - Instantiates the `reader` to access the indexed model file.
+        - Converts paths to a `Path` object for consistency.
+        - Loads and validates the indexed model through the public package reader.
         - Retrieves the main idea, list of thoughts, descriptions, and sub-thoughts for the specified index.
     """
     indexed_model_file = Path(indexed_model_file)
 
-    # Instantiate the reader (IndexedThoughtReader)
-    thought_reader = reader(indexed_model_file)
+    thought_reader = IndexedThoughtReader(read_from_json_file(indexed_model_file))
 
     # Get the main idea
     idea = thought_reader.get_idea()

@@ -18,10 +18,12 @@ generated thought graph.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 from dataclasses import dataclass
 
 from bot0_thought_graph import ProgressionType, ThoughtGraphEngine
+from support import FakeProvider
 
 DEFAULT_TOPIC = "clinical research participant recruitment"
 DEFAULT_PROVIDER = "openai"
@@ -65,7 +67,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--provider",
         default=_env_default("THOUGHT_GRAPH_PROVIDER", DEFAULT_PROVIDER),
-        choices=["openai", "gemini", "deepseek", "anthropic"],
+        choices=["openai", "gemini", "deepseek", "anthropic", "fake"],
         help="LLM provider to use.",
     )
     parser.add_argument(
@@ -109,6 +111,44 @@ def resolve_config(argv: list[str] | None = None) -> RuntimeConfig:
     )
 
 
+def _fake_response_sequence(topic: str, depth: int, breadth: int) -> list[str]:
+    horizontal = {
+        "idea": topic,
+        "thoughts": [
+            {
+                "thought": f"subtopic-{index + 1}",
+                "description": f"Auto-generated subtopic {index + 1}",
+            }
+            for index in range(breadth)
+        ],
+    }
+    vertical = {
+        "idea": topic,
+        "thought": "subtopic-1",
+        "sub_thoughts": [
+            {
+                "name": f"detail-{index + 1}",
+                "description": f"Auto-generated detail {index + 1}",
+            }
+            for index in range(breadth)
+        ],
+    }
+    vertical_calls = 0
+    nodes_at_level = breadth
+    for _ in range(1, depth):
+        vertical_calls += nodes_at_level
+        nodes_at_level *= breadth
+    return [json.dumps(horizontal)] + [json.dumps(vertical)] * vertical_calls
+
+
+def build_provider(config: RuntimeConfig):
+    if config.provider == "fake":
+        return FakeProvider(
+            _fake_response_sequence(config.topic, config.depth, config.breadth)
+        )
+    return config.provider
+
+
 def print_header(config: RuntimeConfig, resolved_model: str) -> None:
     print("Thought Graph Behavioral Test")
     print("=============================")
@@ -150,7 +190,10 @@ def main(argv: list[str] | None = None) -> None:
         ```
     """
     config = resolve_config(argv)
-    engine = ThoughtGraphEngine(provider=config.provider, model=config.model)
+    engine = ThoughtGraphEngine(
+        provider=build_provider(config),
+        model=config.model or "example-model",
+    )
     graph = engine.generate_thought_graph(
         topic=config.topic,
         depth=config.depth,

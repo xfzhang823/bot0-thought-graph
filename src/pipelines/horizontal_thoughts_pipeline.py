@@ -1,16 +1,19 @@
-"""Pipeline to generate parallell (Horizontal) sub topics based on a given main topic."""
+"""Pipeline to generate parallel horizontal subtopics for a given main topic."""
 
+import logging
 import os
 from pathlib import Path
 from typing import Union
-import logging
+
 import logging_config
-from thought_generation.thought_generator import ThoughtGenerator
+
+from bot0_thought_graph.thought_generation import HorizontalGenerationRequest, ThoughtGraphEngine
+from utils.generic_utils import save_to_json_file
 
 from project_config import (
+    CLAUDE_HAIKU,
     CLAUDE_OPUS,
     CLAUDE_SONNET,
-    CLAUDE_HAIKU,
     GPT_35_TURBO,
     GPT_35_TURBO_16K,
     GPT_4,
@@ -89,22 +92,21 @@ def parellel_thoughts_generation_wt_openai_pipeline(
     num_clusters = int(round(10 * 0.7))  # reclustered sub-thoughts
     top_n = round(num_clusters * 0.7)  # number of top sub-thoughts to display
 
-    # Process to generate sub-topics/concepts
-    thought_generator = ThoughtGenerator(
-        llm_provider=llm_provider, model_id=model_id, temperature=0.8
-    )  # Instantiate thought_generator class and set the llm parameters
-
-    idea_model = thought_generator.process_horizontal_thought_generation(
-        thought=idea,
-        num_sub_thoughts=num_of_thoughts,
-        num_clusters=num_clusters,
-        top_n=top_n,
+    engine = ThoughtGraphEngine(provider=llm_provider, model=model_id)
+    idea_model = engine.generate(
+        HorizontalGenerationRequest(
+            idea=idea,
+            model=model_id,
+            num_thoughts=num_of_thoughts,
+            num_clusters=num_clusters,
+            top_n=top_n,
+            temperature=0.8,
+        )
     )
 
     logger.info(f"Thoughts created: {idea_model}")
 
-    # Save results to json file
-    thought_generator.save_results(idea_model, json_file)
+    save_to_json_file(data=idea_model, file_path=json_file)
 
     logger.info(
         f"Finished running horizontal thoughts generation pipeline with {llm_provider}."
@@ -177,19 +179,20 @@ def parellel_thoughts_generation_wt_claude_pipeline(
     num_clusters = int(round(10 * 0.7))  # reclustered sub-thoughts
     top_n = round(num_clusters * 0.7)  # number of top sub-thoughts to display
 
-    # Process to generate sub-topics/concepts
-    thought_generator = ThoughtGenerator(
-        llm_provider=llm_provider, model_id=model_id, temperature=0.8
+    engine = ThoughtGraphEngine(provider=llm_provider, model=model_id)
+    sub_topics = engine.generate(
+        HorizontalGenerationRequest(
+            idea=idea,
+            model=model_id,
+            num_thoughts=num_thoughts,
+            num_clusters=num_clusters,
+            top_n=top_n,
+            temperature=0.8,
+        )
     )
-    sub_topics = thought_generator.process_horizontal_thought_generation(
-        thought=idea,
-        num_sub_thoughts=num_thoughts,
-        num_clusters=num_clusters,
-        top_n=top_n,
-    )  # ideally, top_n should be around 4
 
     logger.info(sub_topics)
-    thought_generator.save_results(sub_topics, json_file)
+    save_to_json_file(data=sub_topics, file_path=json_file)
 
     logger.info(
         f"Finished running horizontal thoughts generation pipeline with {llm_provider}."

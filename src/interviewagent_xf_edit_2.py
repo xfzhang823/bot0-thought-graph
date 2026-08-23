@@ -63,20 +63,15 @@ import configparser
 import os
 import logging
 import logging_config
-import json
-from typing import Optional
-from datetime import datetime
 import getpass
 from dotenv import load_dotenv
 import uvicorn
 
 # Import internal modules
-from utils.generic_utils import read_from_json_file, save_to_json_file
-from thought_generation.thought_reader import IndexedThoughtReader
+from interviewagent_support import QuestionLoader, StateManager
 from project_config import (
     CLAUDE_INDEXED_MODELS_DIR,
     OPENAI_INDEXED_MODELS_DIR,
-    INTERVIEW_STATES_FILE,
 )
 
 # Set up logging
@@ -125,133 +120,6 @@ def get_openai_api_key():
         return api_key
 
     raise ValueError("OpenAI API key not found.")
-
-
-# ================== Core Classes ==================
-class StateManager:
-    """
-    Manages user states for the interview bot.
-    Automatically persists states to a file after every modification.
-
-    Attributes:
-        - storage_path (str): The file path where states are persisted as JSON.
-        - states (dict): A dictionary mapping user IDs to their respective UserState models.
-
-    *Key methods:
-        - `get_state`: Retrieves or initializes a user's state.
-        - `update_state`: Updates user states with new data and timestamps.
-        - `reset_state`: Deletes a user's state from the file.
-
-    !Sample Interview State File Output:
-    {
-        "user_123": {
-            "thought_index": 1,
-            "sub_thought_index": 2,
-            "current_question": "What strategies have you implemented to improve team communication?",
-            "last_updated": "2024-11-17T12:34:56.789Z"
-        },
-        "user_456": {
-            "thought_index": 0,
-            "sub_thought_index": 0,
-            "current_question": null,
-            "last_updated": "2024-11-16T10:20:30.456Z"
-        }
-    }
-
-    """
-
-    def __init__(self, storage_path: Optional[str] = None):
-        self.storage_path = storage_path or INTERVIEW_STATES_FILE
-        self.states = self._load_states()
-
-    def _load_states(self):
-        try:
-            with open(self.storage_path, "r") as f:
-                return json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            return {}
-
-    def persist(self):
-        """Persist states to a file if a storage path is provided."""
-        with open(self.storage_path, "w") as f:
-            json.dump(self.states, f)
-
-    def get_state(self, user_id: str):
-        """Retrieve or initialize a user's state."""
-        if user_id not in self.states:
-            self.states[user_id] = {
-                "thought_index": 0,
-                "sub_thought_index": 0,
-                "current_question": None,
-                "last_updated": datetime.utcnow().isoformat(),
-            }
-        return self.states[user_id]
-
-    def update_state(self, user_id: str, **updates):
-        """Update the state of a user."""
-        state = self.get_state(user_id)
-        state.update(updates)
-        state["last_updated"] = datetime.utcnow().isoformat()
-        self.persist()
-
-    def reset_state(self, user_id: str):
-        """Reset a user's state."""
-        if user_id in self.states:
-            del self.states[user_id]
-        self.persist()
-
-
-class QuestionLoader:
-    """
-    Loads and manages questions from hierarchical data
-
-    Key method:
-    'get_next_question': Determines the next question for a user based on their current state.
-    Handles progression through nested thoughts and resets the state when no more questions
-    are available.
-    """
-
-    def __init__(self, data_file: Path):
-        self.data_source = self._load_data(data_file)
-
-    def _load_data(self, data_file: Path):
-        reader = IndexedThoughtReader(data_file)
-
-        output_data = reader.dump_all()
-
-        logger.info(f"idea model output: {output_data}")
-
-        return output_data
-
-    def get_next_question(self, user_id: str, state_manager: StateManager):
-        """Fetch the next question based on the user's current state."""
-        state = state_manager.get_state(user_id)
-
-        try:
-            thought = self.data_source["thoughts"][state["thought_index"]]
-            sub_thought = thought["sub_thoughts"][state["sub_thought_index"]]
-
-            # Update state for the next question
-            state_manager.update_state(
-                user_id,
-                thought_index=state["thought_index"],
-                sub_thought_index=state["sub_thought_index"] + 1,
-            )
-
-            # Handle sub-thought overflow
-            if state_manager.get_state(user_id)["sub_thought_index"] >= len(
-                thought["sub_thoughts"]
-            ):
-                state_manager.update_state(
-                    user_id,
-                    thought_index=state["thought_index"] + 1,
-                    sub_thought_index=0,
-                )
-
-            return {"thought": thought, "sub_thought": sub_thought}
-        except IndexError:
-            state_manager.reset_state(user_id)
-            return {"message": "No more questions available."}
 
 
 class DialogueManager:

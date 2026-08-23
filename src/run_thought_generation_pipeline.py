@@ -61,8 +61,10 @@ from pipelines.vertical_thoughts_pipeline import (
     vertical_thought_wt_openai_pipeline,
     vertical_thought_wt_claude_pipeline,
 )
+from bot0_thought_graph.thought_generation import index_idea
+from bot0_thought_graph.thought_generation.validation import validate_idea
 from utils.generate_file_names import generate_dynamic_file_name
-from thought_generation.thought_utils import generate_indexed_model_file
+from utils.generic_utils import read_from_json_file, save_to_json_file
 
 from project_config import (
     OPENAI_UNINDEXED_MODELS_DIR,
@@ -220,8 +222,8 @@ def run_pipeline_opeanai(idea: str = outer_idea):  # OpenAI pipeline
         indexed_array_of_thoughts_file
     )
 
-    # Run pipeline
-    generate_indexed_model_file(unindexed_model_file, indexed_model_file)
+    indexed_model = index_idea(validate_idea(read_from_json_file(unindexed_model_file)))
+    save_to_json_file(indexed_model, indexed_model_file)
 
     logger.info(
         f"Index version of array of thoughts files for {idea} created and saved."
@@ -317,8 +319,8 @@ def run_pipeline_claude(idea: str = outer_idea):  # Claude pipeline
         indexed_array_of_thoughts_file
     )
 
-    # Run pipeline
-    generate_indexed_model_file(unindexed_model_file, indexed_model_file)
+    indexed_model = index_idea(validate_idea(read_from_json_file(unindexed_model_file)))
+    save_to_json_file(indexed_model, indexed_model_file)
 
     logger.info(
         f"Index version of array of thoughts files for {idea} created and saved."

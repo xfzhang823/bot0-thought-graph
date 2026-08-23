@@ -9,10 +9,9 @@ import aiofiles
 import logging
 import logging_config
 
-from thought_generation.thought_reader import IndexedThoughtReader
+from interviewagent_support import StateManager
 from agents.facilitator_agent_async import FacilitatorAgentAsync
-from agents.state_management import StateManager
-from utils.generic_utils import pretty_print_json
+from utils.generic_utils import pretty_print_json, read_from_json_file
 
 from project_config import INTERVIEW_STATES_FILE
 
@@ -44,7 +43,7 @@ async def interview_pipeline_async(
     # Step 1. Read a main thought and its sub-thoughts from JSON
     try:
         # Step 1: Initialize IndexedThoughtReader and validate the JSON file
-        thought_reader = IndexedThoughtReader(thought_data_file)
+        thought_reader = IndexedThoughtReader(read_from_json_file(thought_data_file))
         indexed_idea_model = thought_reader.idea_instance  # Extract the validated model
 
         # Step 2: Initialize StateManager
