@@ -91,8 +91,7 @@ Root concept
 
 # 1. OpenAI — GPT-5.6 Luna
 
-**Provider:** OpenAI
-**Model:** `gpt-5.6-luna`
+**Provider:** OpenAI **Model:** `gpt-5.6-luna`
 
 ## Horizontal Result
 
@@ -180,9 +179,7 @@ The measurement of recruitment outcomes, efficiency, representativeness, access,
 
 # 2. DeepSeek — DeepSeek V4 Flash (Thinking)
 
-**Provider:** DeepSeek
-**Model:** `deepseek-v4-flash`
-**Thinking:** enabled
+**Provider:** DeepSeek **Model:** `deepseek-v4-flash` **Thinking:** enabled
 
 ## Horizontal Result
 
@@ -270,8 +267,7 @@ Covers recruitment intelligence, electronic health record and registry mining, d
 
 # 3. Google Gemini — Gemini 2.5 Flash
 
-**Provider:** Gemini
-**Model:** `gemini-2.5-flash`
+**Provider:** Gemini **Model:** `gemini-2.5-flash`
 
 ## Horizontal Result
 

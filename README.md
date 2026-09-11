@@ -33,8 +33,7 @@ uv sync
 
 ## Concept-first usage
 
-The simplest external workflow uses the existing `ThoughtGraphEngine` façade
-with a provider name. Provider adapters do not need to be imported manually:
+The simplest external workflow uses the existing `ThoughtGraphEngine` façade with a provider name. Provider adapters do not need to be imported manually:
 
 ```python
 from bot0_thought_graph import ThoughtGraphEngine
@@ -51,21 +50,9 @@ graph = generator.generate_thought_graph(
 )
 ```
 
-The supported provider names are `openai`, `gemini`, `deepseek`, and
-`anthropic`. Use `model=None` to select the package default; a
-`<PROVIDER>_MODEL` environment variable takes precedence. `horizontal` is the
-maximum number of root-level peer directions retained. `vertical` is the
-maximum number of generated child levels beneath the root. `vertical=1`
-returns the root plus its first horizontal layer, and `vertical=2` adds one
-vertical expansion beneath that layer. Explicit `horizontal` and `vertical`
-values are independent; the horizontal value is not reused as the vertical
-child count. The legacy `depth` and `breadth` arguments remain supported for
-compatibility and cannot be mixed with the new arguments. The façade supports
-vertical values through `MAX_FACADE_DEPTH` (currently eight child levels).
-The existing `concept=` parameter remains supported as an alias for `topic=`.
+The supported provider names are `openai`, `gemini`, `deepseek`, and `anthropic`. Use `model=None` to select the package default; a `<PROVIDER>_MODEL` environment variable takes precedence. `horizontal` is the maximum number of root-level peer directions retained. `vertical` is the maximum number of generated child levels beneath the root. `vertical=1` returns the root plus its first horizontal layer, and `vertical=2` adds one vertical expansion beneath that layer. Explicit `horizontal` and `vertical` values are independent; the horizontal value is not reused as the vertical child count. The legacy `depth` and `breadth` arguments remain supported for compatibility and cannot be mixed with the new arguments. The façade supports legacy `depth` values through 3 and new `vertical` values through `MAX_FACADE_DEPTH` (currently eight child levels). The existing `concept=` parameter remains supported as an alias for `topic=`.
 
-For advanced callers, direct provider injection remains supported. Supply a
-provider implementation or an explicitly constructed SDK client:
+For advanced callers, direct provider injection remains supported. Supply a provider implementation or an explicitly constructed SDK client:
 
 ```python
 from bot0_thought_graph import ThoughtGraphEngine
@@ -96,18 +83,11 @@ graph = engine.generate_thought_graph(
 
 `generate_subtopics()` and `generate_array_of_thoughts()` perform horizontal expansion: they return distinct major dimensions at a similar level of abstraction. `expand_subtopic()` performs one-level vertical expansion using implementation-step semantics by default. The convenience list methods return `list[str]`; structured methods return `ThoughtArray` and `ThoughtGraph`.
 
-Graph `vertical=1` returns the root concept and its first-level subtopics;
-`vertical=2` adds one vertical expansion under each first-level subtopic. The
-explicit `horizontal` value caps root-level peer directions, while vertical
-expansions use an internal child cap independent of horizontal breadth. The
-legacy `depth`/`breadth` arguments retain their previous shared-child-limit
-behavior. Set `ranked=True` on horizontal or graph methods to route the
-first-level subtopics through the clustering/ranking pipeline. The vertical
-methods `expand_subtopic()` and `generate_thought_graph()` accept
-`progression_type=` — a `ProgressionType` member or its string value — to
-select the semantic relationship between a parent thought and its children;
-both default to `ProgressionType.IMPLEMENTATION_STEPS`. These methods do not
-persist results.
+Graph `vertical=1` returns the root concept and its first-level subtopics; `vertical=2` adds one vertical expansion under each first-level subtopic. The explicit `horizontal` value caps root-level peer directions, while vertical expansions use an internal child cap independent of horizontal breadth. The legacy `depth`/`breadth` arguments retain their previous shared-child-limit behavior. Set `ranked=True` on horizontal or graph methods to route the first-level subtopics through the clustering/ranking pipeline. The vertical methods `expand_subtopic()` and `generate_thought_graph()` accept `progression_type=` — a `ProgressionType` member or its string value — to select the semantic relationship between a parent thought and its children; both default to `ProgressionType.IMPLEMENTATION_STEPS`. These methods do not persist results.
+
+When no graph-shape bounds are supplied, `generate_thought_graph()` uses the `balanced` adaptive exploration profile. Callers may select `exploration="focused"`, `"balanced"`, or `"rich"` to change how readily horizontal directions and vertical branches continue. Adaptive exploration cannot be combined with `horizontal`/`vertical` or legacy `breadth`/`depth`. The profiles control continuation decisions rather than fixed graph sizes.
+
+Adaptive traversal may retain a useful child in the graph without recursively expanding that branch when its marginal value is insufficient. Semantic stopping is distinct from internal safety stopping; safety guards prevent runaway adaptive growth and return the valid partial graph produced so far. These guards are internal and are not ordinary graph-shape controls.
 
 ## Provider support
 

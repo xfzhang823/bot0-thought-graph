@@ -56,10 +56,8 @@ The pipeline manages workflows and JSON structures for generating ideas, thought
       - **`models_with_indexes/`**: Stores JSON files for indexed Claude-generated models.
 
 ### Example File Names
-- **Unindexed File**:  
-  `array_of_thoughts_output_without_index_embedded_software_development_openai.json`
-- **Indexed File**:  
-  `array_of_thoughts_output_with_index_embedded_software_development_openai.json`
+- **Unindexed File**: `array_of_thoughts_output_without_index_embedded_software_development_openai.json`
+- **Indexed File**: `array_of_thoughts_output_with_index_embedded_software_development_openai.json`
 
 ### Configuration Paths
 The paths for input/output directories are defined in `config.py` for consistency:
@@ -306,24 +304,20 @@ for sub in sub_thoughts:
 ```
 The "raw output" from the ThoughtReader (a list of dictionaries) would generally be easier to load into prompts for an LLM, especially when generating specific prompts for each sub_thought. Here’s why:
 
-Advantages of Format A
-Structured Data: Format A maintains a structured data format where each sub_thought is encapsulated in a dictionary with keys for name, description, importance, and connection_to_next. This makes it easy to access each piece of information programmatically, allowing you to insert specific values into a prompt.
+Advantages of Format A Structured Data: Format A maintains a structured data format where each sub_thought is encapsulated in a dictionary with keys for name, description, importance, and connection_to_next. This makes it easy to access each piece of information programmatically, allowing you to insert specific values into a prompt.
 
 Simpler Prompt Generation: With structured data, you can dynamically create prompts by looping through each dictionary and accessing fields like name and description without additional parsing or text manipulation.
 
 Consistent Fields: Since each sub_thought in Format A has a consistent set of keys, you avoid parsing issues or potential inconsistencies in how data is organized (which could happen with Format B’s text-based structure).
 
-Example Usage with Format A
-Given Format A, here’s how you could use it to create prompts programmatically:
+Example Usage with Format A Given Format A, here’s how you could use it to create prompts programmatically:
 
-python
-Copy code
-for sub_thought in sub_thoughts:
+python Copy code for sub_thought in sub_thoughts:
     prompt = f"As a facilitator, generate a question for {sub_thought['name']}, defined as {sub_thought['description']}."
     # Send prompt to LLM or store for further use
     print(prompt)
 
-  
+
 ### Error Handling
 
 - If the JSON file structure is incorrect or missing required fields, `ThoughtReader` will raise a `ValueError`.

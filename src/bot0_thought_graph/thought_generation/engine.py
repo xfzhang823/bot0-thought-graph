@@ -1,6 +1,8 @@
 """Public provider-injected thought-generation engine."""
 
 from dataclasses import dataclass
+from enum import Enum
+import re
 from typing import Any
 
 from bot0_thought_graph.models import (
@@ -104,6 +106,35 @@ class VerticalGenerationRequest:
             object.__setattr__(self, "progression_type", ProgressionType(self.progression_type))
 
 
+class _ExplorationReason(str, Enum):
+    """Stable internal categories for adaptive continuation diagnostics."""
+
+    DEPTH_LIMIT = "depth_limit"
+    INSUFFICIENT_DISTINCTNESS = "insufficient_distinctness"
+    INSUFFICIENT_NOVELTY = "insufficient_novelty"
+    INTERNAL_CANDIDATE_LIMIT = "internal_candidate_limit"
+    MATERIAL_DISTINCT = "materially_distinct"
+    MEANINGFUL_CHILDREN = "meaningful_children"
+    NATURAL_ENDPOINT = "natural_endpoint"
+    NO_CANDIDATE = "no_candidate"
+    NO_CHILDREN = "no_children"
+    BRANCH_PRUNED = "branch_pruned"
+    CALL_BUDGET = "call_budget"
+    EXPANSION_BUDGET = "expansion_budget"
+    NODE_BUDGET = "node_budget"
+
+
+@dataclass(frozen=True)
+class _ExplorationDecision:
+    """Recorded adaptive continuation decision for diagnostics and tests."""
+
+    axis: str
+    action: str
+    reason: _ExplorationReason
+    level: int
+    thought: str | None = None
+
+
 class ThoughtGraphEngine:
     """Generate, expand, organize, and optionally persist thought structures.
 
@@ -141,11 +172,64 @@ class ThoughtGraphEngine:
     DEFAULT_FACADE_BREADTH = 6
     """Default number of root-level horizontal thoughts retained."""
 
-    DEFAULT_VERTICAL_CHILDREN = 7
+    _DEFAULT_VERTICAL_CHILDREN = 7
     """Internal child cap for new explicit horizontal/vertical graph calls."""
 
     MAX_FACADE_DEPTH = 8
-    """Maximum number of generated child levels supported by the façade."""
+    """Maximum number of generated child levels supported by new mode."""
+
+    _MAX_LEGACY_DEPTH = 3
+    """Maximum legacy ``depth`` retained for backward compatibility."""
+
+    _ADAPTIVE_MAX_HORIZONTAL = 8
+    """Internal guard against unbounded horizontal candidate generation."""
+
+    _ADAPTIVE_PROFILE_OVERLAP_LIMITS = {
+        "focused": 0.25,
+        "balanced": 0.50,
+        "rich": 0.75,
+    }
+    _ADAPTIVE_BRANCH_OVERLAP_LIMITS = {
+        "focused": 0.05,
+        "balanced": 0.25,
+        "rich": 0.50,
+    }
+
+    _ADAPTIVE_MAX_PROVIDER_CALLS = 64
+    """Internal profile-independent provider-call guard."""
+
+    _ADAPTIVE_MAX_NODES = 128
+    """Internal profile-independent retained-node guard."""
+
+    _ADAPTIVE_MAX_EXPANSIONS = 64
+    """Internal profile-independent expansion-attempt guard."""
+
+    _NATURAL_ENDPOINT_TERMS = frozenset(
+        {
+            "completed",
+            "conclusion",
+            "done",
+            "endpoint",
+            "finished",
+        }
+    )
+    _NATURAL_ENDPOINT_PHRASES = frozenset(
+        {
+            "conclusion",
+            "done",
+            "final answer",
+            "final result",
+            "final step",
+            "final summary",
+            "finished",
+            "natural endpoint",
+            "project complete",
+            "work complete",
+        }
+    )
+    _TOKEN_STOP_WORDS = frozenset(
+        {"a", "an", "and", "for", "in", "of", "on", "the", "to", "with"}
+    )
 
     def __init__(
         self,
@@ -180,6 +264,12 @@ class ThoughtGraphEngine:
             resolved_model = model if model is not None else "default"
         self.repository = repository
         self.model = self._require_text(resolved_model, "model")
+        self.last_exploration_trace: list[_ExplorationDecision] = []
+        self.last_exploration_profile: str | None = None
+        self._adaptive_provider_calls = 0
+        self._adaptive_node_count = 0
+        self._adaptive_expansion_attempts = 0
+        self._adaptive_safety_stopped = False
 
     def generate(self, request: HorizontalGenerationRequest) -> IdeaJSONModel:
         """Generate sibling-level thoughts using the typed horizontal API.
@@ -501,6 +591,7 @@ class ThoughtGraphEngine:
         breadth: int | None = None,
         horizontal: int | None = None,
         vertical: int | None = None,
+        exploration: str | None = None,
         progression_type: ProgressionType = ProgressionType.IMPLEMENTATION_STEPS,
         ranked: bool = False,
         model: str | None = None,
@@ -525,10 +616,16 @@ class ThoughtGraphEngine:
         levels beneath the root. New explicit calls use the internal default
         vertical child cap rather than reusing ``horizontal``.
 
-        Graph generation begins with one horizontal provider call. Each node
-        expanded below the first level requires an additional vertical provider
-        call. Provider-call volume can therefore grow quickly as depth and
-        breadth increase.
+        When no graph-shape bounds are supplied, ``exploration`` defaults to
+        ``"balanced"`` and continuation is evaluated as the graph develops.
+        Adaptive exploration is opt-in when a profile is supplied and cannot
+        be combined with explicit or legacy graph-shape bounds.
+
+        Explicit graph generation begins with one horizontal provider call.
+        Adaptive generation may make additional bounded horizontal candidate
+        calls while evaluating continuation. Each node expanded below the
+        first level requires an additional vertical provider call. Provider-
+        call volume can therefore grow quickly as the graph expands.
 
         Ranking applies only to the initial horizontal subtopics. Generated
         graphs remain in memory and are not persisted automatically.
@@ -539,13 +636,17 @@ class ThoughtGraphEngine:
             topic: Alias for ``concept`` intended for external callers. Only
                 one of ``concept`` and ``topic`` may be supplied.
             depth: Legacy name for the number of generated child levels beneath
-                the root. Must be between 1 and ``MAX_FACADE_DEPTH``, inclusive.
+                the root. Must be between 1 and ``_MAX_LEGACY_DEPTH``, inclusive.
             breadth: Legacy maximum number of children retained per expanded
                 node. It cannot be combined with ``horizontal`` or ``vertical``.
             horizontal: Maximum number of root-level peer directions retained.
                 It cannot be combined with ``depth`` or ``breadth``.
             vertical: Maximum number of generated child levels beneath the
                 root. It cannot be combined with ``depth`` or ``breadth``.
+            exploration: Adaptive continuation profile: ``"focused"``,
+                ``"balanced"``, or ``"rich"``. When omitted without graph
+                bounds, ``"balanced"`` is used. It cannot be combined with
+                ``horizontal``, ``vertical``, ``depth``, or ``breadth``.
             progression_type: Semantic relationship used for every vertical
                 graph expansion. Raw strings are normalized to
                 ``ProgressionType``.
@@ -561,9 +662,9 @@ class ThoughtGraphEngine:
 
         Raises:
             ValueError: If ``concept`` is empty, a bound is not a positive
-                integer, legacy and new bounds are mixed, ``depth``/``vertical``
-                exceeds ``MAX_FACADE_DEPTH``, or the resolved model identifier
-                is empty.
+                integer, legacy and new bounds are mixed, ``depth`` exceeds
+                ``_MAX_LEGACY_DEPTH``, ``vertical`` exceeds ``MAX_FACADE_DEPTH``,
+                or the resolved model identifier is empty.
             Exception: Any provider, parsing, clustering, ranking, or validation
                 exception raised during graph generation.
         """
@@ -574,10 +675,43 @@ class ThoughtGraphEngine:
         concept = self._require_text(concept, "concept")
         new_bounds_supplied = horizontal is not None or vertical is not None
         legacy_bounds_supplied = depth is not None or breadth is not None
+        shape_bounds_supplied = new_bounds_supplied or legacy_bounds_supplied
+        if exploration is not None:
+            exploration = self._require_exploration_profile(exploration)
+        elif not shape_bounds_supplied:
+            exploration = "balanced"
+
+        if exploration is not None and shape_bounds_supplied:
+            raise ValueError(
+                "exploration cannot be combined with depth/breadth or "
+                "horizontal/vertical"
+            )
         if new_bounds_supplied and legacy_bounds_supplied:
             raise ValueError(
                 "horizontal/vertical cannot be combined with depth/breadth"
             )
+
+        progression_type = ProgressionType(progression_type)
+        if exploration is not None:
+            self.last_exploration_trace = []
+            self.last_exploration_profile = exploration
+            self._start_adaptive_run()
+            root = self._generate_adaptive_graph(
+                concept,
+                exploration=exploration,
+                model=model,
+                progression_type=progression_type,
+            )
+            return ThoughtGraph(
+                concept=concept,
+                root=root,
+                depth=max(1, self._graph_depth(root)),
+                breadth=len(root.children),
+            )
+
+        self.last_exploration_trace = []
+        self.last_exploration_profile = None
+        self._start_adaptive_run()
 
         if new_bounds_supplied:
             horizontal = self._require_positive(
@@ -590,7 +724,7 @@ class ThoughtGraphEngine:
             )
             depth = vertical
             breadth = horizontal
-            vertical_child_limit = self.DEFAULT_VERTICAL_CHILDREN
+            vertical_child_limit = self._DEFAULT_VERTICAL_CHILDREN
         else:
             depth = self._require_positive(
                 depth if depth is not None else self.DEFAULT_FACADE_DEPTH,
@@ -602,9 +736,10 @@ class ThoughtGraphEngine:
             )
             vertical_child_limit = breadth
 
-        progression_type = ProgressionType(progression_type)
-        if depth > self.MAX_FACADE_DEPTH:
-            raise ValueError(f"depth must be <= {self.MAX_FACADE_DEPTH}")
+        if new_bounds_supplied and vertical > self.MAX_FACADE_DEPTH:
+            raise ValueError(f"vertical must be <= {self.MAX_FACADE_DEPTH}")
+        if not new_bounds_supplied and depth > self._MAX_LEGACY_DEPTH:
+            raise ValueError(f"depth must be <= {self._MAX_LEGACY_DEPTH}")
 
         array = self.generate_array_of_thoughts(
             concept,
@@ -631,6 +766,361 @@ class ThoughtGraphEngine:
                     progression_type=progression_type,
                 )
         return ThoughtGraph(concept=concept, root=root, depth=depth, breadth=breadth)
+
+    def _generate_adaptive_graph(
+        self,
+        concept: str,
+        *,
+        exploration: str,
+        model: str | None,
+        progression_type: ProgressionType,
+    ) -> ThoughtNode:
+        """Generate a graph by evaluating content novelty at each continuation."""
+        root = ThoughtNode(name=concept)
+        self._adaptive_node_count = 1
+        root.children = self._generate_adaptive_horizontal(
+            concept,
+            exploration=exploration,
+            model=model,
+        )
+        for child in root.children:
+            if self._adaptive_safety_stopped:
+                break
+            self._expand_adaptive_node(
+                child,
+                concept,
+                exploration=exploration,
+                level=1,
+                path=[concept, child.name],
+                model=model,
+                progression_type=progression_type,
+            )
+        return root
+
+    def _generate_adaptive_horizontal(
+        self,
+        concept: str,
+        *,
+        exploration: str,
+        model: str | None,
+    ) -> list[ThoughtNode]:
+        """Generate peer directions until novelty no longer clears the profile."""
+        selected: list[ThoughtNode] = []
+        overlap_limit = self._profile_overlap_limit(exploration)
+
+        for _ in range(self._ADAPTIVE_MAX_HORIZONTAL):
+            if self._adaptive_safety_stopped:
+                break
+            if not self._consume_adaptive_work(level=0):
+                break
+            array = self.generate_array_of_thoughts(
+                concept,
+                max_subtopics=1,
+                ranked=False,
+                model=model,
+            )
+            if not array.thoughts:
+                self._record_exploration_decision(
+                    axis="horizontal",
+                    action="stop",
+                    reason=_ExplorationReason.NO_CANDIDATE,
+                    level=0,
+                )
+                break
+
+            candidate = array.thoughts[0]
+            existing_names = [item.name for item in selected]
+            if not self._is_meaningful_candidate(
+                candidate.name,
+                existing_names,
+                overlap_limit=overlap_limit,
+            ):
+                self._record_exploration_decision(
+                    axis="horizontal",
+                    action="stop",
+                    reason=_ExplorationReason.INSUFFICIENT_DISTINCTNESS,
+                    level=0,
+                    thought=candidate.name,
+                )
+                break
+
+            if self._adaptive_node_count >= self._ADAPTIVE_MAX_NODES:
+                self._record_safety_stop(
+                    _ExplorationReason.NODE_BUDGET,
+                    level=0,
+                    thought=candidate.name,
+                )
+                break
+            selected.append(
+                ThoughtNode(name=candidate.name, description=candidate.description)
+            )
+            self._adaptive_node_count += 1
+            self._record_exploration_decision(
+                axis="horizontal",
+                action="continue",
+                reason=_ExplorationReason.MATERIAL_DISTINCT,
+                level=0,
+                thought=candidate.name,
+            )
+        else:
+            self._record_exploration_decision(
+                axis="horizontal",
+                action="stop",
+                reason=_ExplorationReason.INTERNAL_CANDIDATE_LIMIT,
+                level=0,
+            )
+
+        return selected
+
+    def _expand_adaptive_node(
+        self,
+        node: ThoughtNode,
+        concept: str,
+        *,
+        exploration: str,
+        level: int,
+        path: list[str],
+        model: str | None,
+        progression_type: ProgressionType,
+    ) -> None:
+        """Expand one branch while each generated level remains meaningful."""
+        if level >= self.MAX_FACADE_DEPTH:
+            self._record_exploration_decision(
+                axis="vertical",
+                action="stop",
+                reason=_ExplorationReason.DEPTH_LIMIT,
+                level=level,
+                thought=node.name,
+            )
+            return
+        if self._is_natural_endpoint(node.name):
+            self._record_exploration_decision(
+                axis="vertical",
+                action="stop",
+                reason=_ExplorationReason.NATURAL_ENDPOINT,
+                level=level,
+                thought=node.name,
+            )
+            return
+
+        if not self._consume_adaptive_work(level=level, thought=node.name):
+            return
+
+        result = self._expand_subtopic_result(
+            concept,
+            node.name,
+            max_details=self._DEFAULT_VERTICAL_CHILDREN,
+            max_tokens=1056,
+            model=model,
+            progression_type=progression_type,
+        )
+        overlap_limit = self._profile_overlap_limit(exploration)
+        children = []
+        for item in result.sub_thoughts or []:
+            candidate_context = [*path, *(child.name for child in children)]
+            if self._is_meaningful_candidate(
+                item.name,
+                candidate_context,
+                overlap_limit=overlap_limit,
+            ):
+                if self._adaptive_node_count >= self._ADAPTIVE_MAX_NODES:
+                    self._record_safety_stop(
+                        _ExplorationReason.NODE_BUDGET,
+                        level=level,
+                        thought=item.name,
+                    )
+                    break
+                children.append(
+                    ThoughtNode(name=item.name, description=item.description)
+                )
+                self._adaptive_node_count += 1
+
+        if not children:
+            reason = (
+                _ExplorationReason.NO_CHILDREN
+                if not result.sub_thoughts
+                else _ExplorationReason.INSUFFICIENT_NOVELTY
+            )
+            self._record_exploration_decision(
+                axis="vertical",
+                action="stop",
+                reason=reason,
+                level=level,
+                thought=node.name,
+            )
+            node.children = []
+            return
+
+        node.children = children
+        self._record_exploration_decision(
+            axis="vertical",
+            action="continue",
+            reason=_ExplorationReason.MEANINGFUL_CHILDREN,
+            level=level,
+            thought=node.name,
+        )
+        for child in node.children:
+            if self._adaptive_safety_stopped:
+                break
+            if self._is_natural_endpoint(child.name):
+                self._record_exploration_decision(
+                    axis="vertical",
+                    action="retain",
+                    reason=_ExplorationReason.NATURAL_ENDPOINT,
+                    level=level + 1,
+                    thought=child.name,
+                )
+                continue
+            branch_limit = self._profile_branch_overlap_limit(exploration)
+            if not self._is_meaningful_candidate(
+                child.name,
+                path,
+                overlap_limit=branch_limit,
+            ):
+                self._record_exploration_decision(
+                    axis="vertical",
+                    action="retain",
+                    reason=_ExplorationReason.BRANCH_PRUNED,
+                    level=level + 1,
+                    thought=child.name,
+                )
+                continue
+            self._expand_adaptive_node(
+                child,
+                concept,
+                exploration=exploration,
+                level=level + 1,
+                path=[*path, child.name],
+                model=model,
+                progression_type=progression_type,
+            )
+
+    def _start_adaptive_run(self) -> None:
+        """Reset run-local adaptive counters; explicit mode never consumes them."""
+        self._adaptive_provider_calls = 0
+        self._adaptive_node_count = 0
+        self._adaptive_expansion_attempts = 0
+        self._adaptive_safety_stopped = False
+
+    def _consume_adaptive_work(self, *, level: int, thought: str | None = None) -> bool:
+        """Reserve one provider call and expansion attempt before doing work."""
+        if self._adaptive_safety_stopped:
+            return False
+        if self._adaptive_provider_calls >= self._ADAPTIVE_MAX_PROVIDER_CALLS:
+            self._record_safety_stop(
+                _ExplorationReason.CALL_BUDGET,
+                level=level,
+                thought=thought,
+            )
+            return False
+        if self._adaptive_expansion_attempts >= self._ADAPTIVE_MAX_EXPANSIONS:
+            self._record_safety_stop(
+                _ExplorationReason.EXPANSION_BUDGET,
+                level=level,
+                thought=thought,
+            )
+            return False
+        self._adaptive_provider_calls += 1
+        self._adaptive_expansion_attempts += 1
+        return True
+
+    def _record_safety_stop(
+        self,
+        reason: _ExplorationReason,
+        *,
+        level: int,
+        thought: str | None = None,
+    ) -> None:
+        if self._adaptive_safety_stopped:
+            return
+        self._adaptive_safety_stopped = True
+        self._record_exploration_decision(
+            axis="global",
+            action="stop",
+            reason=reason,
+            level=level,
+            thought=thought,
+        )
+
+    def _record_exploration_decision(
+        self,
+        *,
+        axis: str,
+        action: str,
+        reason: _ExplorationReason,
+        level: int,
+        thought: str | None = None,
+    ) -> None:
+        self.last_exploration_trace.append(
+            _ExplorationDecision(
+                axis=axis,
+                action=action,
+                reason=reason,
+                level=level,
+                thought=thought,
+            )
+        )
+
+    @classmethod
+    def _profile_overlap_limit(cls, exploration: str) -> float:
+        return cls._ADAPTIVE_PROFILE_OVERLAP_LIMITS[exploration]
+
+    @classmethod
+    def _profile_branch_overlap_limit(cls, exploration: str) -> float:
+        return cls._ADAPTIVE_BRANCH_OVERLAP_LIMITS[exploration]
+
+    @classmethod
+    def _is_meaningful_candidate(
+        cls,
+        candidate: str,
+        existing: list[str],
+        *,
+        overlap_limit: float,
+    ) -> bool:
+        candidate_tokens = cls._tokens(candidate)
+        if not candidate_tokens:
+            return False
+        return all(
+            cls._token_overlap(candidate_tokens, cls._tokens(item)) <= overlap_limit
+            for item in existing
+        )
+
+    @staticmethod
+    def _tokens(value: str) -> set[str]:
+        return {
+            token
+            for token in re.findall(r"[a-z0-9]+", value.lower())
+            if token not in ThoughtGraphEngine._TOKEN_STOP_WORDS
+        }
+
+    @staticmethod
+    def _token_overlap(left: set[str], right: set[str]) -> float:
+        if not left or not right:
+            return 0.0
+        return len(left & right) / len(left | right)
+
+    @classmethod
+    def _is_natural_endpoint(cls, value: str) -> bool:
+        normalized = " ".join(re.findall(r"[a-z0-9]+", value.lower()))
+        if normalized in cls._NATURAL_ENDPOINT_PHRASES:
+            return True
+        return bool(cls._tokens(value) & cls._NATURAL_ENDPOINT_TERMS)
+
+    @staticmethod
+    def _graph_depth(node: ThoughtNode) -> int:
+        """Return generated child-level depth using the public graph meaning."""
+        if not node.children:
+            return 0
+        return 1 + max(ThoughtGraphEngine._graph_depth(child) for child in node.children)
+
+    @staticmethod
+    def _require_exploration_profile(value: str) -> str:
+        if not isinstance(value, str):
+            raise ValueError("exploration must be 'focused', 'balanced', or 'rich'")
+        normalized = value.strip().lower()
+        if normalized not in {"focused", "balanced", "rich"}:
+            raise ValueError("exploration must be 'focused', 'balanced', or 'rich'")
+        return normalized
 
     def _expand_graph_node(
         self,

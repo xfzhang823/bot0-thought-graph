@@ -226,6 +226,8 @@ The public `horizontal` setting applies to horizontal peer directions and must n
 
 Adaptive exploration must also avoid expanding every branch mechanically when doing so adds little value. Branch selection and pruning are part of exploration policy.
 
+The initial adaptive branch-selection implementation may retain a useful child in the graph while declining to expand that child recursively. Selection is deterministic and provider-neutral; it is a continuation decision, not a fixed branch-count mapping.
+
 ## Internal Safety Limits
 
 Removing public maximums does **not** mean execution should be literally unbounded.
@@ -254,6 +256,8 @@ Ordinary callers should not be required to configure:
 Those are internal implementation and operational concerns unless a future advanced API demonstrates a concrete need to expose them.
 
 When an internal safety guard terminates an adaptive run, the result should expose enough diagnostic information to distinguish a safety stop from a natural semantic stop.
+
+The initial safeguards use internal provider-call, retained-node, and expansion-work guards. They are profile-independent, return the valid partial graph accumulated before termination, and record a stable safety category in the exploration trace.
 
 ## Recommended Public API
 
@@ -421,18 +425,17 @@ Implement adaptive horizontal and vertical continuation decisions in orchestrati
 
 Profiles should alter continuation and stopping behavior, not map to fixed breadth/depth presets.
 
-Add deterministic tests for profile behavior, branch-specific stopping, and material-distinctness decisions.
+Add deterministic tests for profile behavior, branch-specific stopping, and material-distinctness decisions. Record basic stable stop-reason categories for adaptive diagnostics.
 
 ### Phase 3 — Branch Selection, Diagnostics, and Safety Budgets
 
-Refine adaptive traversal so the engine does not mechanically expand every generated branch.
+The baseline implementation now prevents adaptive traversal from mechanically expanding every generated branch. It provides deterministic branch selection, retain-versus-expand behavior, stable semantic/safety diagnostics, and internal call/node/expansion safeguards. Future work may refine the heuristics and diagnostics without changing the public API.
 
-Add:
+Implemented baseline:
 
 - branch selection and pruning;
-- explicit semantic stop reasons;
-- internal call/node/token/runtime safeguards as appropriate;
-- diagnostics that distinguish semantic stopping from safety stopping.
+- richer diagnostics that distinguish semantic stopping from safety stopping;
+- internal call/node/expansion safeguards.
 
 Keep these operational safeguards out of the normal public API.
 
@@ -450,11 +453,11 @@ Use benchmarks and behavior tests to refine focused, balanced, and rich semantic
 
 1. Should the new concept-first public method remain `generate_thought_graph`, or should a new clearer entry point be introduced while the existing method remains compatibility-facing?
 2. Should explicit mode require both `horizontal` and `vertical`, or may callers explicitly control one while allowing the engine to choose the other?
-3. What internal signal or judge should determine material distinctness for horizontal continuation?
-4. What internal signal or judge should determine marginal conceptual value for vertical continuation?
+3. How should the deterministic lexical baseline for material distinctness be refined without overstating semantic authority?
+4. How should the deterministic baseline for marginal conceptual value be refined without requiring embeddings or an LLM judge?
 5. Should adaptive continuation decisions be made per node, per frontier, or through a hybrid strategy?
 6. How should the engine select promising branches without turning exploration into a ranking-only problem?
-7. Which internal operational safeguards are necessary for the first adaptive release?
-8. What result metadata is necessary to distinguish natural semantic stops, empty-provider stops, provider failures, and internal safety stops?
+7. Are the current internal call, node, and expansion safeguards sufficient for the first adaptive release?
+8. What additional result metadata, if any, is needed beyond the current trace categories for natural semantic stops, empty-provider stops, provider failures, and internal safety stops?
 9. Should adaptive stop decisions be persisted in graph metadata or remain execution diagnostics?
 10. At what point does adaptive orchestration justify extracting a dedicated exploration-policy object?
