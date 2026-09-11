@@ -34,6 +34,10 @@ VERTICAL = (
     '{"name":"Safety screening","description":"Initial safety checks"}'
     ']}'
 )
+VERTICAL_ONE_CHILD = (
+    '{"idea":"Clinical research recruitment","thought":"next",'
+    '"sub_thoughts":[{"name":"next level","description":"Further detail"}]}'
+)
 
 
 def test_convenience_methods_translate_horizontal_and_vertical_requests():
@@ -164,6 +168,103 @@ def test_graph_normalizes_progression_type_and_includes_it_in_vertical_prompts()
     assert ProgressionType.PREREQUISITE_DEPENDENCY.value == "prerequisite_dependency"
 
 
+def test_graph_supports_independent_horizontal_and_vertical_bounds():
+    provider = FakeProvider([HORIZONTAL] + [VERTICAL_ONE_CHILD] * 14)
+    graph = ThoughtGraphEngine(provider).generate_thought_graph(
+        "Clinical research recruitment",
+        horizontal=2,
+        vertical=8,
+    )
+
+    assert graph.breadth == 2
+    assert graph.depth == 8
+    assert len(graph.root.children) == 2
+    assert len(provider.requests) == 15  # one horizontal call plus 7 per branch
+    assert all("exactly 7" in request.prompt for request in provider.requests[1:])
+    assert all("exactly 2" not in request.prompt for request in provider.requests[1:])
+
+    def leaf_depth(node):
+        if not node.children:
+            return 1
+        return 1 + max(leaf_depth(child) for child in node.children)
+
+    assert [leaf_depth(child) for child in graph.root.children] == [8, 8]
+
+
+def test_horizontal_bound_is_not_reused_for_vertical_children():
+    provider = FakeProvider([HORIZONTAL, VERTICAL, VERTICAL])
+    graph = ThoughtGraphEngine(provider).generate_thought_graph(
+        "Clinical research recruitment",
+        horizontal=2,
+        vertical=2,
+    )
+
+    assert len(graph.root.children) == 2
+    assert [len(child.children) for child in graph.root.children] == [3, 3]
+    assert all("exactly 7" in request.prompt for request in provider.requests[1:])
+
+
+@pytest.mark.parametrize("vertical", [1, 2, 3])
+def test_new_vertical_bound_has_no_off_by_one(vertical):
+    provider = FakeProvider([HORIZONTAL] + [VERTICAL_ONE_CHILD] * (2 * vertical))
+    graph = ThoughtGraphEngine(provider).generate_thought_graph(
+        "Clinical research recruitment",
+        horizontal=2,
+        vertical=vertical,
+    )
+
+    assert len(provider.requests) == 1 + 2 * (vertical - 1)
+
+    def leaf_depth(node):
+        if not node.children:
+            return 1
+        return 1 + max(leaf_depth(child) for child in node.children)
+
+    assert [leaf_depth(child) for child in graph.root.children] == [vertical, vertical]
+
+
+def test_new_bounds_reject_mixed_legacy_bounds_before_provider_calls():
+    provider = FakeProvider([])
+    engine = ThoughtGraphEngine(provider)
+
+    with pytest.raises(ValueError, match="cannot be combined"):
+        engine.generate_thought_graph(
+            "systems", horizontal=2, vertical=8, breadth=2
+        )
+    with pytest.raises(ValueError, match="cannot be combined"):
+        engine.generate_thought_graph("systems", horizontal=2, depth=2)
+    assert provider.requests == []
+
+
+@pytest.mark.parametrize(
+    ("keyword", "value"),
+    [("horizontal", 0), ("horizontal", -1), ("vertical", 0), ("vertical", -1)],
+)
+def test_new_bounds_reject_invalid_values_before_provider_calls(keyword, value):
+    provider = FakeProvider([])
+    with pytest.raises(ValueError, match=keyword):
+        ThoughtGraphEngine(provider).generate_thought_graph(
+            "systems", **{keyword: value}
+        )
+    assert provider.requests == []
+
+
+def test_progression_type_remains_vertical_only_with_new_bounds():
+    provider = FakeProvider([HORIZONTAL, VERTICAL, VERTICAL])
+    ThoughtGraphEngine(provider).generate_thought_graph(
+        "Clinical research recruitment",
+        horizontal=2,
+        vertical=2,
+        progression_type="prerequisite_dependency",
+    )
+
+    assert "Progression type:" not in provider.requests[0].prompt
+    assert all(
+        'Progression type: "prerequisite_dependency"' in request.prompt
+        for request in provider.requests[1:]
+    )
+
+
 @pytest.mark.parametrize(
     "call",
     [
@@ -173,7 +274,7 @@ def test_graph_normalizes_progression_type_and_includes_it_in_vertical_prompts()
         lambda engine: engine.expand_subtopic("concept", "topic", max_details=-1),
         lambda engine: engine.generate_thought_graph("concept", depth=0),
         lambda engine: engine.generate_thought_graph("concept", breadth=0),
-        lambda engine: engine.generate_thought_graph("concept", depth=4),
+        lambda engine: engine.generate_thought_graph("concept", depth=9),
     ],
 )
 def test_concept_first_validation_rejects_invalid_input(call):

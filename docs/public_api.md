@@ -41,15 +41,19 @@ OpenAI `gpt-5.6-luna`, Gemini `gemini-3.6-flash`, DeepSeek `deepseek-v4-flash`,
 Anthropic `claude-3-5-sonnet-20241022`. The returned value is always the
 package-owned `ThoughtGraph` model, independent of the provider SDK.
 
-`breadth` is the maximum number of horizontal siblings and the maximum number
-of children retained at each vertical expansion. `depth=1` returns the root
-plus its first horizontal layer; `depth=2` adds one vertical expansion beneath
-each first-level thought; `depth=3` adds a third generated child level. Depth
-is bounded by `ThoughtGraphEngine.MAX_FACADE_DEPTH`. The `topic=` parameter is
-canonical; the existing `concept=` parameter remains supported as an alias
-(supply only one). Vertical expansion in `generate_thought_graph()` accepts
-`progression_type=` (default `ProgressionType.IMPLEMENTATION_STEPS`). Results
-use Pydantic's standard `model_dump()` and `model_dump_json()` serialization.
+`horizontal` is the maximum number of root-level peer directions retained;
+`vertical` is the maximum number of generated child levels beneath the root.
+`vertical=1` returns the root plus its first horizontal layer; `vertical=2`
+adds one vertical expansion beneath each first-level thought. Explicit
+horizontal and vertical values are independent, and the horizontal value is
+not reused as the vertical child-count limit. The legacy `depth=` and
+`breadth=` arguments remain supported and cannot be mixed with the new names.
+Vertical values are bounded by `ThoughtGraphEngine.MAX_FACADE_DEPTH`. The
+`topic=` parameter is canonical; the existing `concept=` parameter remains
+supported as an alias (supply only one). Vertical expansion in
+`generate_thought_graph()` accepts `progression_type=` (default
+`ProgressionType.IMPLEMENTATION_STEPS`). Results use Pydantic's standard
+`model_dump()` and `model_dump_json()` serialization.
 
 Direct provider-object injection remains supported:
 
@@ -68,11 +72,19 @@ details = engine.expand_subtopic(
 )
 thought_array = engine.generate_array_of_thoughts("Clinical research recruitment")
 graph = engine.generate_thought_graph(
-    "Clinical research recruitment", depth=2, breadth=6
+    "Clinical research recruitment", horizontal=2, vertical=8
 )
 ```
 
-Horizontal methods produce sibling-level major dimensions. Vertical expansion produces direct, more-specific children of one subtopic. `ThoughtArray` contains the concept and typed first-level `Thought` items. `ThoughtGraph` contains the concept, a `ThoughtNode` root, and recursive child nodes. `depth=1` means root plus first-level subtopics; `depth=2` adds one vertical expansion under each subtopic. `breadth` caps generated children. Graph generation performs one provider call for the horizontal expansion plus one call per expanded node and never persists implicitly.
+Horizontal methods produce sibling-level major dimensions. Vertical expansion
+produces direct, more-specific children of one subtopic. `ThoughtArray`
+contains the concept and typed first-level `Thought` items. `ThoughtGraph`
+contains the concept, a `ThoughtNode` root, and recursive child nodes.
+`vertical=1` means root plus first-level subtopics; `vertical=2` adds one
+vertical expansion under each subtopic. `horizontal` caps root-level peer
+directions, while explicit vertical mode uses an independent internal child
+cap. Graph generation performs one provider call for the horizontal expansion
+plus one call per expanded node and never persists implicitly.
 
 Set `ranked=True` on horizontal or graph methods to use the existing clustering/ranking path. `expand_subtopic()` and `generate_thought_graph()` accept `progression_type=` (a `ProgressionType` member or its string value; default `ProgressionType.IMPLEMENTATION_STEPS`) to select the parent→child semantic relationship. `ProgressionType` (`implementation_steps`, `simple_to_complex`, `chronological`, `problem_solution`, `prerequisite_dependency`) is exported from `bot0_thought_graph` and `bot0_thought_graph.models`. Vertical expansion preserves provider order.
 

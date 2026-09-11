@@ -46,18 +46,22 @@ generator = ThoughtGraphEngine(
 
 graph = generator.generate_thought_graph(
     topic="clinical research participant recruitment",
-    depth=3,
-    breadth=5,
+    horizontal=2,
+    vertical=8,
 )
 ```
 
 The supported provider names are `openai`, `gemini`, `deepseek`, and
 `anthropic`. Use `model=None` to select the package default; a
-`<PROVIDER>_MODEL` environment variable takes precedence. `breadth` is the
-maximum number of horizontal siblings and vertical children retained at each
-expansion. `depth=1` returns the root plus its first horizontal layer,
-`depth=2` adds one vertical expansion beneath that layer, and the façade
-supports depths through `MAX_FACADE_DEPTH` (currently three child levels).
+`<PROVIDER>_MODEL` environment variable takes precedence. `horizontal` is the
+maximum number of root-level peer directions retained. `vertical` is the
+maximum number of generated child levels beneath the root. `vertical=1`
+returns the root plus its first horizontal layer, and `vertical=2` adds one
+vertical expansion beneath that layer. Explicit `horizontal` and `vertical`
+values are independent; the horizontal value is not reused as the vertical
+child count. The legacy `depth` and `breadth` arguments remain supported for
+compatibility and cannot be mixed with the new arguments. The façade supports
+vertical values through `MAX_FACADE_DEPTH` (currently eight child levels).
 The existing `concept=` parameter remains supported as an alias for `topic=`.
 
 For advanced callers, direct provider injection remains supported. Supply a
@@ -85,14 +89,25 @@ details = engine.expand_subtopic(
 thought_array = engine.generate_array_of_thoughts("Clinical research recruitment")
 graph = engine.generate_thought_graph(
     "Clinical research recruitment",
-    depth=2,
-    breadth=6,
+    horizontal=2,
+    vertical=8,
 )
 ```
 
 `generate_subtopics()` and `generate_array_of_thoughts()` perform horizontal expansion: they return distinct major dimensions at a similar level of abstraction. `expand_subtopic()` performs one-level vertical expansion using implementation-step semantics by default. The convenience list methods return `list[str]`; structured methods return `ThoughtArray` and `ThoughtGraph`.
 
-Graph `depth=1` returns the root concept and its first-level subtopics. `depth=2` adds one vertical expansion under each first-level subtopic. The façade bounds depth at three child levels (`MAX_FACADE_DEPTH`), caps children at `breadth`, and makes one provider call per expanded node. Set `ranked=True` on horizontal or graph methods to route the first-level subtopics through the clustering/ranking pipeline. The vertical methods `expand_subtopic()` and `generate_thought_graph()` accept `progression_type=` — a `ProgressionType` member or its string value — to select the semantic relationship between a parent thought and its children; both default to `ProgressionType.IMPLEMENTATION_STEPS`. These methods do not persist results.
+Graph `vertical=1` returns the root concept and its first-level subtopics;
+`vertical=2` adds one vertical expansion under each first-level subtopic. The
+explicit `horizontal` value caps root-level peer directions, while vertical
+expansions use an internal child cap independent of horizontal breadth. The
+legacy `depth`/`breadth` arguments retain their previous shared-child-limit
+behavior. Set `ranked=True` on horizontal or graph methods to route the
+first-level subtopics through the clustering/ranking pipeline. The vertical
+methods `expand_subtopic()` and `generate_thought_graph()` accept
+`progression_type=` — a `ProgressionType` member or its string value — to
+select the semantic relationship between a parent thought and its children;
+both default to `ProgressionType.IMPLEMENTATION_STEPS`. These methods do not
+persist results.
 
 ## Provider support
 

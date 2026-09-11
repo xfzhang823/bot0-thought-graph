@@ -135,7 +135,16 @@ class ThoughtGraphEngine:
             concept-first façade.
     """
 
-    MAX_FACADE_DEPTH = 3
+    DEFAULT_FACADE_DEPTH = 2
+    """Default number of generated child levels beneath the root."""
+
+    DEFAULT_FACADE_BREADTH = 6
+    """Default number of root-level horizontal thoughts retained."""
+
+    DEFAULT_VERTICAL_CHILDREN = 7
+    """Internal child cap for new explicit horizontal/vertical graph calls."""
+
+    MAX_FACADE_DEPTH = 8
     """Maximum number of generated child levels supported by the façade."""
 
     def __init__(
@@ -488,8 +497,10 @@ class ThoughtGraphEngine:
         concept: str | None = None,
         *,
         topic: str | None = None,
-        depth: int = 2,
-        breadth: int = 6,
+        depth: int | None = None,
+        breadth: int | None = None,
+        horizontal: int | None = None,
+        vertical: int | None = None,
         progression_type: ProgressionType = ProgressionType.IMPLEMENTATION_STEPS,
         ranked: bool = False,
         model: str | None = None,
@@ -507,8 +518,12 @@ class ThoughtGraphEngine:
         * ``depth=2`` additionally expands every first-level subtopic.
         * ``depth=3`` additionally expands every second-level node.
 
-        ``breadth`` limits the number of children retained at every expanded
-        node.
+        Legacy ``breadth`` limits the number of children retained at every
+        expanded node. New callers can instead use independent
+        ``horizontal`` and ``vertical`` values: ``horizontal`` limits the
+        root-level peer directions, while ``vertical`` limits generated child
+        levels beneath the root. New explicit calls use the internal default
+        vertical child cap rather than reusing ``horizontal``.
 
         Graph generation begins with one horizontal provider call. Each node
         expanded below the first level requires an additional vertical provider
@@ -523,9 +538,14 @@ class ThoughtGraphEngine:
                 may continue to pass this positionally or by keyword.
             topic: Alias for ``concept`` intended for external callers. Only
                 one of ``concept`` and ``topic`` may be supplied.
-            depth: Number of generated child levels beneath the root. Must be
-                between 1 and ``MAX_FACADE_DEPTH``, inclusive.
-            breadth: Maximum number of children retained per expanded node.
+            depth: Legacy name for the number of generated child levels beneath
+                the root. Must be between 1 and ``MAX_FACADE_DEPTH``, inclusive.
+            breadth: Legacy maximum number of children retained per expanded
+                node. It cannot be combined with ``horizontal`` or ``vertical``.
+            horizontal: Maximum number of root-level peer directions retained.
+                It cannot be combined with ``depth`` or ``breadth``.
+            vertical: Maximum number of generated child levels beneath the
+                root. It cannot be combined with ``depth`` or ``breadth``.
             progression_type: Semantic relationship used for every vertical
                 graph expansion. Raw strings are normalized to
                 ``ProgressionType``.
@@ -536,12 +556,14 @@ class ThoughtGraphEngine:
 
         Returns:
             A ``ThoughtGraph`` containing the root node, generated hierarchy,
-            and the requested depth and breadth metadata.
+            and the resolved depth and breadth metadata. In new explicit mode,
+            those metadata fields correspond to ``vertical`` and ``horizontal``.
 
         Raises:
-            ValueError: If ``concept`` is empty, ``depth`` or ``breadth`` is not
-                a positive integer, ``depth`` exceeds ``MAX_FACADE_DEPTH``, or
-                the resolved model identifier is empty.
+            ValueError: If ``concept`` is empty, a bound is not a positive
+                integer, legacy and new bounds are mixed, ``depth``/``vertical``
+                exceeds ``MAX_FACADE_DEPTH``, or the resolved model identifier
+                is empty.
             Exception: Any provider, parsing, clustering, ranking, or validation
                 exception raised during graph generation.
         """
@@ -550,8 +572,36 @@ class ThoughtGraphEngine:
                 raise ValueError("provide either concept or topic, not both")
             concept = topic
         concept = self._require_text(concept, "concept")
-        depth = self._require_positive(depth, "depth")
-        breadth = self._require_positive(breadth, "breadth")
+        new_bounds_supplied = horizontal is not None or vertical is not None
+        legacy_bounds_supplied = depth is not None or breadth is not None
+        if new_bounds_supplied and legacy_bounds_supplied:
+            raise ValueError(
+                "horizontal/vertical cannot be combined with depth/breadth"
+            )
+
+        if new_bounds_supplied:
+            horizontal = self._require_positive(
+                horizontal if horizontal is not None else self.DEFAULT_FACADE_BREADTH,
+                "horizontal",
+            )
+            vertical = self._require_positive(
+                vertical if vertical is not None else self.DEFAULT_FACADE_DEPTH,
+                "vertical",
+            )
+            depth = vertical
+            breadth = horizontal
+            vertical_child_limit = self.DEFAULT_VERTICAL_CHILDREN
+        else:
+            depth = self._require_positive(
+                depth if depth is not None else self.DEFAULT_FACADE_DEPTH,
+                "depth",
+            )
+            breadth = self._require_positive(
+                breadth if breadth is not None else self.DEFAULT_FACADE_BREADTH,
+                "breadth",
+            )
+            vertical_child_limit = breadth
+
         progression_type = ProgressionType(progression_type)
         if depth > self.MAX_FACADE_DEPTH:
             raise ValueError(f"depth must be <= {self.MAX_FACADE_DEPTH}")
@@ -576,7 +626,7 @@ class ThoughtGraphEngine:
                     concept,
                     depth=depth,
                     level=1,
-                    breadth=breadth,
+                    vertical_child_limit=vertical_child_limit,
                     model=model,
                     progression_type=progression_type,
                 )
@@ -589,7 +639,7 @@ class ThoughtGraphEngine:
         *,
         depth: int,
         level: int,
-        breadth: int,
+        vertical_child_limit: int,
         model: str | None,
         progression_type: ProgressionType,
     ) -> None:
@@ -604,7 +654,8 @@ class ThoughtGraphEngine:
             concept: Root concept used to constrain every vertical expansion.
             depth: Maximum generated child depth beneath the root.
             level: Current depth of ``node`` relative to the root.
-            breadth: Maximum number of children retained for the node.
+            vertical_child_limit: Internal maximum number of children retained
+                for each vertical expansion.
             model: Optional provider-specific model override.
 
         Notes:
@@ -616,14 +667,14 @@ class ThoughtGraphEngine:
         result = self._expand_subtopic_result(
             concept,
             node.name,
-            max_details=breadth,
+            max_details=vertical_child_limit,
             max_tokens=1056,
             model=model,
             progression_type=progression_type,
         )
         node.children = [
             ThoughtNode(name=item.name, description=item.description)
-            for item in (result.sub_thoughts or [])[:breadth]
+            for item in (result.sub_thoughts or [])[:vertical_child_limit]
         ]
         for child in node.children:
             self._expand_graph_node(
@@ -631,7 +682,7 @@ class ThoughtGraphEngine:
                 concept,
                 depth=depth,
                 level=level + 1,
-                breadth=breadth,
+                vertical_child_limit=vertical_child_limit,
                 model=model,
                 progression_type=progression_type,
             )
