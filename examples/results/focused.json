@@ -1,0 +1,126 @@
+{
+  "breadth": 3,
+  "concept": "participant recruitment for a post-stroke gait rehabilitation study using a wearable robotic exoskeleton",
+  "depth": 3,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "description": "Specify stroke type, lesion location or laterality, time since stroke, and clinical stability requirements for inclusion.",
+            "name": "Define stroke-related eligibility criteria"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "description": "Specify whether participants must walk independently, with supervision, or with an assistive device, including minimum distance or duration.",
+                "name": "Define minimum walking ability"
+              },
+              {
+                "children": [],
+                "description": "Set allowable or required values for walking speed, cadence, endurance, balance, and gait asymmetry relevant to exoskeleton training.",
+                "name": "Specify gait-performance limits"
+              },
+              {
+                "children": [],
+                "description": "Identify mobility conditions that could make assisted walking unsafe, such as inability to maintain standing balance or excessive fall risk.",
+                "name": "Define safety-related mobility criteria"
+              }
+            ],
+            "description": "Establish acceptable walking ability, lower-limb motor impairment, balance capacity, assistive-device use, and functional assessment thresholds.",
+            "name": "Set ambulatory and motor-function requirements"
+          },
+          {
+            "children": [],
+            "description": "Identify physical, orthopedic, neurological, cognitive, and cardiovascular criteria affecting safe use and compatibility with the wearable robotic exoskeleton.",
+            "name": "Screen exoskeleton safety and fit factors"
+          },
+          {
+            "children": [],
+            "description": "Set target ranges for age, sex, stroke representation, and geographic or clinical-site distribution to support the intended study population.",
+            "name": "Define recruitment demographics and site coverage"
+          }
+        ],
+        "description": "The clinical, demographic, functional, and safety characteristics defining who the study is intended to recruit.",
+        "name": "Target participant population"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "description": "Identify stroke centers, rehabilitation hospitals, outpatient clinics, neurologists, physiatrists, and physical therapists that can refer potentially eligible participants.",
+            "name": "Map clinical referral sources"
+          },
+          {
+            "children": [],
+            "description": "Engage stroke survivor organizations, support groups, community rehabilitation programs, and local advocacy networks to reach individuals outside formal clinical pathways.",
+            "name": "Establish community outreach channels"
+          },
+          {
+            "children": [],
+            "description": "Create and distribute accessible flyers, email announcements, social media posts, registry notices, and study webpages explaining the exoskeleton intervention and eligibility screening process.",
+            "name": "Deploy participant-facing recruitment materials"
+          },
+          {
+            "children": [],
+            "description": "Track inquiries, screened candidates, enrollments, referral volume, and participant demographics by recruitment source and location to identify gaps and redirect outreach.",
+            "name": "Monitor source performance and geographic reach"
+          }
+        ],
+        "description": "The settings, networks, channels, and geographic scope through which eligible potential participants can be identified and accessed.",
+        "name": "Recruitment sources and reach"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "description": "Set the required sample size, recruitment timeline, eligibility profile, and feasible referral channels such as stroke clinics, rehabilitation centers, registries, and community organizations.",
+            "name": "Define enrollment targets and recruitment sources"
+          },
+          {
+            "children": [],
+            "description": "Create accessible advertisements, invitations, and informational materials explaining the study purpose, exoskeleton experience, time commitment, eligibility, compensation, and contact process.",
+            "name": "Develop participant-facing recruitment materials"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "description": "Specify stroke-related, functional, medical, cognitive, and safety criteria for inclusion and exclusion.",
+                "name": "Define eligibility criteria"
+              },
+              {
+                "children": [],
+                "description": "Develop a standardized method for reviewing referrals, medical records, or prescreening questionnaires against the eligibility criteria.",
+                "name": "Create the initial screening process"
+              },
+              {
+                "children": [],
+                "description": "Use consistent assessments to verify gait ability, mobility level, physical capacity, and contraindications to wearable exoskeleton use.",
+                "name": "Conduct standardized eligibility assessments"
+              },
+              {
+                "children": [],
+                "description": "Record eligibility determinations, reasons for exclusion, pending information, and appropriate follow-up or referral actions.",
+                "name": "Document screening decisions and referrals"
+              }
+            ],
+            "description": "Implement referral intake, prescreening, clinical eligibility checks, mobility and safety assessments, and standardized tracking of screening outcomes and reasons for exclusion.",
+            "name": "Establish screening and eligibility workflows"
+          },
+          {
+            "children": [],
+            "description": "Monitor reasons for declining or withdrawing, gather feedback on comfort and perceived burden, and adjust scheduling, transportation, caregiver support, communication, and onboarding procedures to improve acceptability.",
+            "name": "Assess participation barriers and refine the enrollment process"
+          }
+        ],
+        "description": "The factors influencing willingness and ability to participate, including perceived relevance, burden, accessibility, trust, and retention potential.",
+        "name": "Enrollment feasibility and acceptability"
+      }
+    ],
+    "description": null,
+    "name": "participant recruitment for a post-stroke gait rehabilitation study using a wearable robotic exoskeleton"
+  }
+}

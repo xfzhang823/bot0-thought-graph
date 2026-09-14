@@ -1,0 +1,676 @@
+{
+  "breadth": 8,
+  "concept": "participant recruitment for a post-stroke gait rehabilitation study using a wearable robotic exoskeleton",
+  "depth": 8,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "description": "Specify required characteristics such as stroke diagnosis, time since stroke, age range, gait impairment, cognitive capacity, and medically stable status.",
+            "name": "Define inclusion criteria"
+          },
+          {
+            "children": [],
+            "description": "Identify conditions that could compromise safety, data quality, or intervention feasibility, including severe comorbidities, uncontrolled pain, major musculoskeletal limitations, or contraindications to exoskeleton use.",
+            "name": "Define exclusion criteria"
+          },
+          {
+            "children": [],
+            "description": "Set measurable requirements for walking ability, balance, strength, assistive-device use, body dimensions, weight, and the physical capacity needed to tolerate robotic-exoskeleton training.",
+            "name": "Specify functional and safety thresholds"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "description": "Specify stroke type, time since stroke, lesion characteristics where relevant, and stability of neurological status required for participation.",
+                "name": "Define stroke-related eligibility characteristics"
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "description": "Specify required levels of independent or assisted walking, including use of assistive devices and supervision.",
+                    "name": "Define baseline walking ability"
+                  },
+                  {
+                    "children": [],
+                    "description": "Establish minimum and maximum walking-distance or endurance criteria using standardized tests such as the six-minute walk test.",
+                    "name": "Set gait-distance and endurance thresholds"
+                  },
+                  {
+                    "children": [],
+                    "description": "Define acceptable balance impairment, fall risk, and the maximum physical assistance permitted during standing and walking.",
+                    "name": "Specify balance and assistance limits"
+                  },
+                  {
+                    "children": [],
+                    "description": "Set requirements for voluntary leg control, joint range of motion, spasticity, and strength needed to safely use the exoskeleton.",
+                    "name": "Establish lower-limb motor and range-of-motion criteria"
+                  }
+                ],
+                "description": "Determine acceptable walking ability, assistance level, balance capacity, and gait impairment range for safely using and evaluating the wearable exoskeleton.",
+                "name": "Set mobility and gait-function requirements"
+              },
+              {
+                "children": [],
+                "description": "Identify inclusion and exclusion factors such as musculoskeletal limitations, cardiopulmonary instability, severe spasticity, skin conditions, cognitive impairment, or contraindications to robotic-assisted gait training.",
+                "name": "Establish safety and medical eligibility criteria"
+              },
+              {
+                "children": [],
+                "description": "Set the intended age range, sex and gender representation goals, language requirements, geographic catchment area, and care settings from which participants will be recruited.",
+                "name": "Define recruitment demographics and access parameters"
+              }
+            ],
+            "description": "Define the intended stroke survivor profile, including stroke type and laterality, rehabilitation stage, severity distribution, demographic considerations, and representation goals for the study sample.",
+            "name": "Establish the target recruitment population"
+          }
+        ],
+        "description": "The clinical, demographic, functional, and safety characteristics that define the intended participant population and determine recruitment eligibility.",
+        "name": "Participant Eligibility and Population Definition"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "description": "Select stroke clinics, rehabilitation hospitals, outpatient therapy centers, and neurology practices whose patients may meet the study criteria.",
+            "name": "Identify eligible clinical referral sites"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "description": "Select stroke units, rehabilitation hospitals, outpatient therapy clinics, neurologists, and physiatrists that serve potentially eligible participants.",
+                "name": "Identify clinical referral sources"
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "description": "Specify the stroke clinics, rehabilitation hospitals, neurologists, therapists, and community organizations that may refer eligible participants.",
+                    "name": "Identify referral sources"
+                  },
+                  {
+                    "children": [],
+                    "description": "Develop standardized referral forms, study information sheets, eligibility prompts, and contact instructions for referring professionals.",
+                    "name": "Create referral materials"
+                  },
+                  {
+                    "children": [],
+                    "description": "Define how referrals are submitted, logged, reviewed for initial eligibility, and assigned to authorized study staff for follow-up.",
+                    "name": "Establish referral submission and triage workflow"
+                  },
+                  {
+                    "children": [],
+                    "description": "Specify timelines and responsibilities for acknowledging referrals, contacting potential participants, documenting outcomes, and reporting referral progress.",
+                    "name": "Set referral communication and tracking procedures"
+                  }
+                ],
+                "description": "Create standardized processes for clinicians and staff to identify, introduce, and refer potentially eligible post-stroke patients to the study team.",
+                "name": "Define referral procedures"
+              },
+              {
+                "children": [],
+                "description": "Obtain approvals from participating facilities, department leaders, privacy offices, and other relevant authorities to conduct recruitment through clinical channels.",
+                "name": "Secure institutional permissions"
+              },
+              {
+                "children": [],
+                "description": "Equip referral partners with eligibility summaries, study brochures, contact instructions, and training on appropriate recruitment conversations and handoffs.",
+                "name": "Provide referral materials and training"
+              }
+            ],
+            "description": "Obtain institutional approvals and create procedures for clinicians and site staff to identify, inform, and refer potentially eligible participants.",
+            "name": "Establish referral pathways and permissions"
+          },
+          {
+            "children": [],
+            "description": "Develop partnerships with stroke survivor groups, local disability organizations, community rehabilitation programs, and advocacy networks to broaden outreach.",
+            "name": "Engage community and stroke-support organizations"
+          },
+          {
+            "children": [],
+            "description": "Distribute approved study information through accessible flyers, websites, registries, social media, and mailing lists, including clear contact and screening instructions.",
+            "name": "Deploy accessible participant-facing outreach"
+          }
+        ],
+        "description": "The healthcare, community, research, and communication channels through which potential participants can be identified and reached.",
+        "name": "Recruitment Sources and Access"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "description": "Set recruitment criteria and outreach goals that support participation across relevant stroke severity, mobility, demographic, geographic, and socioeconomic groups.",
+            "name": "Define inclusive eligibility and outreach criteria"
+          },
+          {
+            "children": [],
+            "description": "Create plain-language, multilingual, and accessibility-adapted materials explaining the exoskeleton, study activities, eligibility, risks, benefits, and participation expectations.",
+            "name": "Develop accessible recruitment materials"
+          },
+          {
+            "children": [],
+            "description": "Build recruitment pathways with stroke clinics, rehabilitation providers, support organizations, community groups, and patient advocates serving the target population.",
+            "name": "Engage referral and community partners"
+          },
+          {
+            "children": [],
+            "description": "Track recruitment responses, screening outcomes, enrollment rates, retention signals, and participant characteristics to identify representation gaps and adjust outreach strategies.",
+            "name": "Monitor enrollment equity and engagement"
+          }
+        ],
+        "description": "The factors shaping willingness to participate, informed decision-making, retention through enrollment, and equitable representation of the target population.",
+        "name": "Enrollment Engagement and Representation"
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "description": "Specify whether ischemic, intracerebral hemorrhagic, or other stroke diagnoses are eligible for recruitment.",
+                    "name": "Define eligible stroke types"
+                  },
+                  {
+                    "children": [],
+                    "description": "Identify acceptable confirmation sources, such as medical records, neurology documentation, or brain imaging reports.",
+                    "name": "Set diagnostic evidence requirements"
+                  },
+                  {
+                    "children": [],
+                    "description": "Verify that the participant's walking limitation is attributable to the documented stroke rather than another primary condition.",
+                    "name": "Confirm stroke-related gait impairment"
+                  },
+                  {
+                    "children": [],
+                    "description": "Record time since the qualifying stroke and determine how recurrent or multiple strokes affect eligibility.",
+                    "name": "Document stroke timing and recurrence"
+                  }
+                ],
+                "description": "Define acceptable evidence of stroke, including ischemic or hemorrhagic classification, medical documentation, and any required imaging confirmation.",
+                "name": "Specify stroke diagnosis and confirmation"
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "description": "Specify the minimum and maximum time elapsed since stroke for participant eligibility.",
+                    "name": "Define the eligible post-stroke time window"
+                  },
+                  {
+                    "children": [],
+                    "description": "Establish whether time since stroke is calculated from symptom onset, hospital admission, diagnosis, or another documented date.",
+                    "name": "Choose the stroke onset reference date"
+                  },
+                  {
+                    "children": [],
+                    "description": "Determine which stroke event serves as the reference when a candidate has experienced multiple strokes.",
+                    "name": "Specify handling of recurrent strokes"
+                  },
+                  {
+                    "children": [],
+                    "description": "Use medical records, discharge documentation, or participant history to confirm that the candidate meets the specified time window.",
+                    "name": "Verify time since stroke during screening"
+                  }
+                ],
+                "description": "Establish the eligible post-stroke interval, including minimum recovery time and any upper limit relevant to the rehabilitation study.",
+                "name": "Set time since stroke"
+              },
+              {
+                "children": [],
+                "description": "Set measurable requirements for lower-limb weakness, walking ability, balance, and functional mobility that match the exoskeleton intervention.",
+                "name": "Define motor and gait impairment thresholds"
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "description": "Set the required time since stroke and recovery phase to ensure participants are beyond the desired acute or early-subacute period.",
+                    "name": "Define minimum post-stroke recovery interval"
+                  },
+                  {
+                    "children": [],
+                    "description": "Specify acceptable ranges for motor impairment, lower-limb control, sensation, cognition, and communication needed to participate safely and follow rehabilitation instructions.",
+                    "name": "Establish neurological status requirements"
+                  },
+                  {
+                    "children": [],
+                    "description": "Define requirements for stable cardiovascular, respiratory, musculoskeletal, and other relevant medical conditions that could affect exoskeleton-assisted walking.",
+                    "name": "Set medical stability thresholds"
+                  },
+                  {
+                    "children": [],
+                    "description": "Identify the clinical assessments, medical-record review, clinician confirmation, and reassessment schedule used to verify that each candidate meets the stability criteria.",
+                    "name": "Create stability verification procedures"
+                  }
+                ],
+                "description": "Identify requirements for stable neurological status, absence of acute complications, and medical clearance for gait training with the wearable robotic exoskeleton.",
+                "name": "Specify neurological and clinical stability criteria"
+              }
+            ],
+            "description": "Specify stroke type, time since stroke, lesion-related considerations, and residual motor impairments relevant to safe and interpretable exoskeleton gait rehabilitation.",
+            "name": "Define stroke-related eligibility characteristics"
+          },
+          {
+            "children": [],
+            "description": "Establish minimum and maximum walking ability, balance capacity, transfer independence, assistive-device use, and gait-support needs required for participation.",
+            "name": "Set functional mobility requirements"
+          },
+          {
+            "children": [],
+            "description": "Identify health conditions, musculoskeletal limitations, cognitive or communication factors, and contraindications that affect safe use of the wearable robotic exoskeleton.",
+            "name": "Establish safety and medical suitability criteria"
+          },
+          {
+            "children": [],
+            "description": "Set recruitment goals for age range, sex, affected-side distribution, stroke severity, and other characteristics needed to represent the intended post-stroke population.",
+            "name": "Define demographic and representation targets"
+          }
+        ],
+        "description": "The clinical, demographic, functional, and technology-related characteristics defining who the study seeks to recruit.",
+        "name": "Target Participant Population"
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "description": "Build relationships with stroke clinics, rehabilitation centers, neurologists, and therapists who can identify and refer potentially eligible participants.",
+            "name": "Establish clinical referral pathways"
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "description": "Explain the study purpose, eligibility, visits, potential benefits, risks, and participant responsibilities using clear, nontechnical wording.",
+                "name": "Translate study information into plain language"
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "description": "Assess aphasia, dysarthria, hearing, and preferred communication methods during eligibility screening and recruitment.",
+                    "name": "Screen communication abilities"
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "children": [
+                                  {
+                                    "children": [],
+                                    "description": "Specify the main walking-related improvement the exoskeleton intervention is intended to produce, such as increased walking speed, distance, or independence.",
+                                    "name": "Define the primary gait outcome"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Identify the post-stroke gait limitation being addressed, such as reduced paretic-leg swing, asymmetry, poor foot clearance, or impaired balance during walking.",
+                                    "name": "Specify the targeted mobility impairment"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Explain how improvements in gait are expected to translate into practical activities, such as safer household ambulation, community mobility, or reduced assistance needs.",
+                                    "name": "Set the expected functional benefit"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "State the planned duration and training frequency needed for participants to achieve or demonstrate the intended gait-related improvement.",
+                                    "name": "Define the rehabilitation timeframe"
+                                  }
+                                ],
+                                "description": "Explain that the study evaluates whether wearable robotic exoskeleton-assisted gait training can improve walking ability, mobility, or functional recovery after stroke.",
+                                "name": "Describe the rehabilitation objective"
+                              },
+                              {
+                                "children": [
+                                  {
+                                    "children": [],
+                                    "description": "Explain how the device supports leg movement, stepping, balance, or weight shifting during walking practice.",
+                                    "name": "Describe the exoskeleton’s gait assistance"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Show how exoskeleton-assisted walking is intended to provide repetitive, task-specific practice that may support post-stroke gait recovery.",
+                                    "name": "Clarify the rehabilitation purpose"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Describe what participants are expected to do while wearing the device, including actively initiating or contributing to steps when applicable.",
+                                    "name": "Explain participant interaction"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Explain the safeguards, therapist supervision, fitting procedures, and monitoring used during exoskeleton-assisted sessions.",
+                                    "name": "Communicate safety and clinician oversight"
+                                  }
+                                ],
+                                "description": "Clarify how the wearable robotic device supports or assists leg movement during gait rehabilitation and why it is being evaluated.",
+                                "name": "Explain the role of the exoskeleton"
+                              },
+                              {
+                                "children": [],
+                                "description": "Summarize what participation entails, such as training sessions, walking assessments, device use, and the approximate time commitment.",
+                                "name": "Set expectations for participant involvement"
+                              },
+                              {
+                                "children": [],
+                                "description": "Present possible personal or broader benefits while noting that improvement is not guaranteed and that the study is intended to generate research evidence.",
+                                "name": "Clarify potential benefits and limitations"
+                              }
+                            ],
+                            "description": "Describe why the study is being conducted and how it may help improve walking rehabilitation after stroke.",
+                            "name": "Explain the study purpose"
+                          },
+                          {
+                            "children": [],
+                            "description": "Explain what the wearable robotic device looks like, how it supports walking, and what participants will do during sessions.",
+                            "name": "Describe the exoskeleton experience"
+                          },
+                          {
+                            "children": [],
+                            "description": "State eligibility criteria, visit schedules, session duration, assessments, and expected participant responsibilities in easy-to-understand terms.",
+                            "name": "Clarify participation requirements"
+                          },
+                          {
+                            "children": [],
+                            "description": "Clearly outline possible discomforts, potential benefits, alternatives, privacy protections, and that joining or leaving the study is voluntary.",
+                            "name": "Explain risks, benefits, and choice"
+                          }
+                        ],
+                        "description": "Rewrite study information in accessible language that explains post-stroke gait rehabilitation, the wearable robotic exoskeleton, and participant expectations without unnecessary technical terminology.",
+                        "name": "Use plain-language explanations"
+                      },
+                      {
+                        "children": [],
+                        "description": "Explain how the exoskeleton is fitted and operated, what training and walking sessions involve, and how staff will support participants during the study.",
+                        "name": "Describe device use and procedures"
+                      },
+                      {
+                        "children": [],
+                        "description": "Present foreseeable risks such as fatigue, discomfort, balance loss, skin irritation, or falls, along with potential benefits and available non-study rehabilitation alternatives.",
+                        "name": "Clarify risks, benefits, and alternatives"
+                      }
+                    ],
+                    "description": "Provide study explanations, consent materials, and instructions in plain language and accessible formats suited to participants' communication needs.",
+                    "name": "Adapt participant information"
+                  },
+                  {
+                    "children": [],
+                    "description": "Evaluate memory, attention, comprehension, and decision-making abilities relevant to understanding study demands and completing recruitment procedures.",
+                    "name": "Assess cognitive capacity"
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "description": "Assess whether each potential participant requires assistance understanding the study, weighing participation, communicating a choice, or involving a legally authorized representative.",
+                        "name": "Identify decision-making support needs"
+                      },
+                      {
+                        "children": [],
+                        "description": "Create plain-language, visual, translated, and communication-accessible materials explaining the exoskeleton, gait procedures, risks, benefits, time commitment, and voluntary nature of participation.",
+                        "name": "Prepare accessible study explanations"
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [],
+                            "description": "Specify who may serve as a support person and whether their role includes transportation, communication assistance, mobility support, or appointment coordination.",
+                            "name": "Define support-person eligibility and roles"
+                          },
+                          {
+                            "children": [
+                              {
+                                "children": [],
+                                "description": "Explain expected responsibilities, including assisting with transportation, communication, appointments, device-related support, and participant safety.",
+                                "name": "Define the support person's role"
+                              },
+                              {
+                                "children": [
+                                  {
+                                    "children": [],
+                                    "description": "Explain screening, baseline assessments, training visits, follow-up evaluations, expected duration, and time commitments.",
+                                    "name": "Describe the visit schedule and session flow"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Show how the device is fitted, adjusted, started, and monitored, including participant instructions for walking with the system.",
+                                    "name": "Demonstrate exoskeleton fitting and operation"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Outline the walking exercises, assistance settings, therapist support, rest periods, and how training intensity may advance.",
+                                    "name": "Explain rehabilitation activities and progression"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Cover harnesses and support equipment, adverse-event monitoring, stopping rules, reporting discomfort, and requirements during and between sessions.",
+                                    "name": "Review safety procedures and participant responsibilities"
+                                  }
+                                ],
+                                "description": "Describe visit schedules, gait-training activities, wearable robotic exoskeleton operation, supervision, and what support persons may observe or participate in.",
+                                "name": "Explain study procedures and exoskeleton use"
+                              },
+                              {
+                                "children": [],
+                                "description": "Summarize foreseeable physical, privacy, emotional, and logistical risks, potential benefits, available alternatives, and procedures for reporting concerns or adverse events.",
+                                "name": "Present risks, benefits, and alternatives"
+                              },
+                              {
+                                "children": [],
+                                "description": "Provide consent or acknowledgment forms covering support-person involvement, permitted information sharing, emergency contacts, withdrawal rights, and preferred communication methods.",
+                                "name": "Document permission and communication preferences"
+                              }
+                            ],
+                            "description": "Prepare accessible explanations of the exoskeleton study, visit expectations, safety considerations, privacy boundaries, and the distinction between participant consent and support-person involvement.",
+                            "name": "Create support-person information and consent materials"
+                          },
+                          {
+                            "children": [],
+                            "description": "Establish how staff will obtain permission to contact support persons, document authorized contacts, share updates, and accommodate participants with communication or cognitive impairments.",
+                            "name": "Set procedures for support-person communication"
+                          },
+                          {
+                            "children": [],
+                            "description": "Define when support persons may attend screening or enrollment sessions and how staff will manage transportation assistance, observation, safety support, and independent participant decision-making.",
+                            "name": "Plan support-person participation during recruitment visits"
+                          }
+                        ],
+                        "description": "Define how family members, caregivers, interpreters, advocates, or legally authorized representatives may participate without directing or coercing the individual’s decision.",
+                        "name": "Establish support-person involvement procedures"
+                      },
+                      {
+                        "children": [],
+                        "description": "Use a documented process to confirm understanding, record the participant’s own preference, obtain representative authorization when required, and reassess willingness throughout recruitment.",
+                        "name": "Document consent capacity and voluntariness"
+                      }
+                    ],
+                    "description": "Define procedures for involving legally authorized representatives, caregivers, speech-language professionals, or cognitive supports when needed.",
+                    "name": "Plan supported decision-making"
+                  }
+                ],
+                "description": "Adapt text, reading level, layout, and communication supports for people with aphasia, cognitive impairment, visual limitations, or fatigue.",
+                "name": "Address post-stroke communication and cognitive needs"
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "description": "Write study invitations, flyers, and web copy using clear language that explains eligibility, visit requirements, potential benefits, risks, and the wearable exoskeleton without unnecessary technical terms.",
+                    "name": "Develop plain-language recruitment content"
+                  },
+                  {
+                    "children": [],
+                    "description": "Create large-print flyers and handouts with readable fonts, strong contrast, uncluttered layouts, concise sections, and contact details that are easy for people with post-stroke visual or cognitive difficulties to use.",
+                    "name": "Produce accessible print materials"
+                  },
+                  {
+                    "children": [],
+                    "description": "Format recruitment webpages, emails, and downloadable documents for screen readers, keyboard navigation, captions, text resizing, mobile devices, and low-bandwidth access.",
+                    "name": "Build accessible digital materials"
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "description": "Prepare easy-to-read flyers and information sheets with enlarged text for older adults and people with post-stroke vision or reading difficulties.",
+                        "name": "Create large-print recruitment materials"
+                      },
+                      {
+                        "children": [],
+                        "description": "Offer recruitment information through an accessible website, email, and mobile-friendly formats with clear navigation, captions, and screen-reader compatibility.",
+                        "name": "Develop accessible digital content"
+                      },
+                      {
+                        "children": [],
+                        "description": "Record plain-language audio messages and captioned videos explaining the study, wearable exoskeleton, eligibility, visits, and contact process.",
+                        "name": "Produce audio and video explanations"
+                      },
+                      {
+                        "children": [],
+                        "description": "Translate recruitment content into commonly used local languages and arrange interpreter support for potential participants and caregivers with limited English proficiency.",
+                        "name": "Provide translated and interpreter-supported materials"
+                      }
+                    ],
+                    "description": "Offer audio descriptions, captioned videos, translated versions, easy-read summaries, and telephone or in-person explanations to accommodate participants with aphasia, hearing loss, language differences, or limited digital access.",
+                    "name": "Provide alternative communication formats"
+                  }
+                ],
+                "description": "Produce large-print flyers, screen-reader-compatible digital materials, captioned videos, and other formats suitable for diverse access needs.",
+                "name": "Create accessible print and digital formats"
+              },
+              {
+                "children": [],
+                "description": "Describe the wearable robotic exoskeleton, fitting and training requirements, expected sensations, safety monitoring, and relevant participation considerations without overstating benefits.",
+                "name": "Include transparent exoskeleton-specific information"
+              }
+            ],
+            "description": "Create plain-language flyers, clinician scripts, digital notices, and study summaries explaining participation, safety, time commitments, and wearable exoskeleton use.",
+            "name": "Develop accessible recruitment materials"
+          },
+          {
+            "children": [],
+            "description": "Distribute recruitment information through approved clinical, community, patient advocacy, and online channels that reach adults recovering from stroke and their caregivers.",
+            "name": "Conduct targeted participant outreach"
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "description": "Explain that the study evaluates whether wearable robotic exoskeleton-assisted gait rehabilitation can improve walking ability, mobility, or related outcomes after stroke.",
+                    "name": "Introduce the study purpose"
+                  },
+                  {
+                    "children": [],
+                    "description": "Outline what participants will do, including screening, baseline assessments, supervised exoskeleton training sessions, and follow-up evaluations.",
+                    "name": "Describe participant activities"
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [],
+                            "description": "Describe the wearable frame, motors, sensors, control unit, and how the device is fitted to a participant’s body.",
+                            "name": "Explain the exoskeleton’s physical design"
+                          },
+                          {
+                            "children": [],
+                            "description": "Clarify how the exoskeleton detects movement and provides powered support during gait training.",
+                            "name": "Explain the walking assistance mechanism"
+                          },
+                          {
+                            "children": [],
+                            "description": "Explain how the device is intended to improve walking ability, strength, balance, coordination, or endurance after stroke.",
+                            "name": "Describe the rehabilitation goals"
+                          },
+                          {
+                            "children": [],
+                            "description": "Outline what participants will experience during sessions, including supervised walking, device adjustments, training duration, and expected level of assistance.",
+                            "name": "Set expectations for participant use"
+                          }
+                        ],
+                        "description": "Explain the exoskeleton’s wearable components, intended gait-support function, and how it assists post-stroke walking.",
+                        "name": "Describe the device and its purpose"
+                      },
+                      {
+                        "children": [],
+                        "description": "Describe how participants are fitted, prepared, and guided through exoskeleton-assisted walking during each intervention session.",
+                        "name": "Outline the training session procedure"
+                      },
+                      {
+                        "children": [],
+                        "description": "Explain how assistance level, walking duration, speed, or task difficulty may be adjusted as participants advance.",
+                        "name": "Specify the intervention progression"
+                      },
+                      {
+                        "children": [],
+                        "description": "Describe harnesses, therapist supervision, device checks, monitoring for fatigue or discomfort, and procedures for stopping or modifying sessions.",
+                        "name": "Explain safety monitoring and participant support"
+                      }
+                    ],
+                    "description": "Describe how the wearable robotic exoskeleton supports or assists walking, how sessions are conducted, and how assistance may be adjusted to participant ability.",
+                    "name": "Explain the exoskeleton intervention"
+                  },
+                  {
+                    "children": [],
+                    "description": "State the expected number and duration of visits, requirements during sessions, possible temporary discomforts or fatigue, and the importance of following study instructions.",
+                    "name": "Clarify time commitments and participant expectations"
+                  }
+                ],
+                "description": "Clearly describe the rehabilitation goals, visit schedule, gait-training activities, and what participation involves.",
+                "name": "Explain study purpose and procedures"
+              },
+              {
+                "children": [],
+                "description": "Explain how the wearable robotic exoskeleton works, expected sensations, foreseeable risks, safety precautions, and available support.",
+                "name": "Communicate exoskeleton use and safety"
+              },
+              {
+                "children": [],
+                "description": "Use accessible communication and teach-back methods to confirm comprehension, address concerns, and incorporate participants' mobility goals and preferences.",
+                "name": "Assess participant understanding and preferences"
+              },
+              {
+                "children": [],
+                "description": "Obtain informed consent, document eligibility and contact details, schedule baseline assessments, and provide participants with study contacts and next steps.",
+                "name": "Complete consent and enrollment coordination"
+              }
+            ],
+            "description": "Provide responsive contact options, caregiver involvement, transportation or scheduling assistance, suitability discussions, and clear pre-screening and consent processes.",
+            "name": "Support informed engagement and enrollment"
+          }
+        ],
+        "description": "The channels, settings, stakeholders, and communication considerations governing how eligible participants can be reached and interested.",
+        "name": "Recruitment Access and Engagement"
+      },
+      {
+        "children": [],
+        "description": "The criteria, assessment processes, ethical safeguards, and consent requirements determining whether prospective participants can be enrolled.",
+        "name": "Eligibility, Screening, and Enrollment Governance"
+      },
+      {
+        "children": [],
+        "description": "The characteristics, inclusion and exclusion criteria, medical status, functional profile, and safety-related suitability defining who can participate.",
+        "name": "Participant eligibility and clinical suitability"
+      },
+      {
+        "children": [],
+        "description": "The sources, pathways, outreach context, consent environment, and demographic or clinical representativeness shaping how eligible participants are reached and enrolled.",
+        "name": "Recruitment access and enrollment representation"
+      }
+    ],
+    "description": null,
+    "name": "participant recruitment for a post-stroke gait rehabilitation study using a wearable robotic exoskeleton"
+  }
+}
