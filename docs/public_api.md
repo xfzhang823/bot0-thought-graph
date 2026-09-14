@@ -62,6 +62,11 @@ Horizontal methods produce sibling-level major dimensions. Vertical expansion pr
 
 When no graph-shape bounds are supplied, `generate_thought_graph()` uses the `balanced` adaptive exploration profile. The `exploration=` argument accepts `"focused"`, `"balanced"`, or `"rich"`; profiles control continuation and stopping decisions rather than mapping to fixed breadth/depth values. Adaptive profiles cannot be combined with explicit `horizontal=`/`vertical=` or legacy `breadth=`/`depth=` arguments.
 
+Adaptive horizontal exploration probes small bounded candidate batches and
+evaluates distinctness and marginal value locally before requesting further
+coverage. The batch strategy is internal and does not expose a horizontal
+width control.
+
 Adaptive traversal can retain a useful generated child while pruning it from further recursive expansion. Semantic stopping remains distinct from internal safety stopping; if an internal guard is reached, the engine returns the valid partial graph and records the safety category in its exploration trace. Guard values are internal and are not public graph-shape controls.
 
 Set `ranked=True` on horizontal or graph methods to use the existing clustering/ranking path. `expand_subtopic()` and `generate_thought_graph()` accept `progression_type=` (a `ProgressionType` member or its string value; default `ProgressionType.IMPLEMENTATION_STEPS`) to select the parent→child semantic relationship. `ProgressionType` (`implementation_steps`, `simple_to_complex`, `chronological`, `problem_solution`, `prerequisite_dependency`) is exported from `bot0_thought_graph` and `bot0_thought_graph.models`. Vertical expansion preserves provider order.

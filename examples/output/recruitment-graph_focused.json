@@ -1,0 +1,665 @@
+{
+  "breadth": 1,
+  "concept": "participant recruitment for a post-stroke gait rehabilitation study using a wearable robotic exoskeleton",
+  "depth": 8,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "description": "Specify stroke type, lesion characteristics, chronicity, and relevant demographic boundaries for the intended study population.",
+            "name": "Define the target stroke population"
+          },
+          {
+            "children": [],
+            "description": "Establish minimum and maximum requirements for walking ability, gait impairment, assistive-device use, and functional mobility.",
+            "name": "Set gait-related inclusion criteria"
+          },
+          {
+            "children": [],
+            "description": "Identify physical, biomechanical, and motor-control characteristics required for safe and effective use of the wearable robotic exoskeleton.",
+            "name": "Specify exoskeleton suitability criteria"
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "description": "Specify unstable or high-risk cardiovascular conditions that make participation unsafe, such as recent major cardiac events, uncontrolled arrhythmias, decompensated heart failure, or unstable angina.",
+                    "name": "Define cardiovascular exclusion criteria"
+                  },
+                  {
+                    "children": [],
+                    "description": "Collect relevant cardiovascular history, including prior myocardial infarction, heart failure, arrhythmias, vascular disease, syncope, and recent hospitalizations.",
+                    "name": "Review medical history and current diagnoses"
+                  },
+                  {
+                    "children": [],
+                    "description": "Ask about chest pain, exertional dyspnea, palpitations, dizziness, fainting, unusual fatigue, and other symptoms suggesting cardiovascular instability.",
+                    "name": "Verify current cardiovascular symptoms"
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [],
+                            "description": "Identify and gather all devices needed for recruitment screening and baseline gait assessments, including the exoskeleton, motion sensors, force-measurement tools, timing devices, and safety equipment.",
+                            "name": "Inventory required equipment"
+                          },
+                          {
+                            "children": [],
+                            "description": "Check each device for visible damage, wear, loose components, depleted batteries, software faults, or other issues that could affect participant safety or measurement quality.",
+                            "name": "Inspect equipment condition"
+                          },
+                          {
+                            "children": [
+                              {
+                                "children": [
+                                  {
+                                    "children": [],
+                                    "description": "Verify the exact wearable robotic exoskeleton, available sizes, modular components, and study-specific configuration intended for participant use.",
+                                    "name": "Confirm exoskeleton model and configuration"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Assess whether the device can accommodate the expected range of post-stroke body dimensions, limb lengths, joint limitations, and asymmetries.",
+                                    "name": "Check participant fit and adjustability"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Confirm operation of emergency stops, joint-limit protections, torque limits, harnesses, fall-prevention supports, and other safeguards required during gait rehabilitation.",
+                                    "name": "Validate clinical safety features"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Check that onboard sensors and any supplementary wearable or laboratory systems can capture the gait, mobility, and intervention data required by the study.",
+                                    "name": "Confirm sensing and data-capture compatibility"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Verify compatibility with available walking surfaces, parallel bars, treadmills, ramps, charging facilities, network access, and clinical monitoring equipment.",
+                                    "name": "Test interoperability with clinical facilities"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Run representative setup, fitting, walking, monitoring, data transfer, charging, and fault-recovery procedures before recruiting participants for device-based sessions.",
+                                    "name": "Complete end-to-end system testing"
+                                  }
+                                ],
+                                "description": "Confirm that the exoskeleton model, control unit, sensors, workstation, and operating system meet the validated firmware and software requirements.",
+                                "name": "Verify hardware and system compatibility"
+                              },
+                              {
+                                "children": [],
+                                "description": "Retrieve the authorized firmware, drivers, control application, and supporting files from the validated source using the study-approved versions.",
+                                "name": "Obtain approved software packages"
+                              },
+                              {
+                                "children": [
+                                  {
+                                    "children": [],
+                                    "description": "Document the device make, model, serial number, and hardware revision used during recruitment-related assessments.",
+                                    "name": "Identify the exoskeleton model and hardware revision"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Record participant-specific frame dimensions, joint alignment adjustments, cuff positions, and other fitting parameters.",
+                                    "name": "Document mechanical fit and adjustment settings"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Document torque or force assistance, gait-phase settings, control mode, impedance parameters, and related robotic support configurations.",
+                                    "name": "Record assistance and control parameters"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "List the sensors enabled, their placement, calibration status, sampling settings, and any calibration procedure used.",
+                                    "name": "Capture sensor and calibration configuration"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Record speed limits, range-of-motion limits, emergency-stop configuration, harness settings, and other safety-critical parameters.",
+                                    "name": "Log safety and operational settings"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Track configuration changes by date, participant, operator, reason, and approval status so recruitment and screening records remain reproducible.",
+                                    "name": "Maintain configuration change history"
+                                  }
+                                ],
+                                "description": "Document software versions, firmware revisions, device identifiers, installation dates, and configuration settings for traceability.",
+                                "name": "Record version and configuration information"
+                              },
+                              {
+                                "children": [],
+                                "description": "Install the required drivers, runtime components, communication libraries, and security certificates needed for the exoskeleton software to operate.",
+                                "name": "Install device drivers and dependencies"
+                              },
+                              {
+                                "children": [],
+                                "description": "Apply the validated firmware to the wearable robotic exoskeleton according to the manufacturer’s controlled update procedure.",
+                                "name": "Update the exoskeleton firmware"
+                              },
+                              {
+                                "children": [],
+                                "description": "Confirm successful communication, sensor detection, calibration access, error handling, and safe startup through documented functional checks before participant use.",
+                                "name": "Run post-installation verification"
+                              }
+                            ],
+                            "description": "Ensure the exoskeleton, sensors, data-acquisition systems, and analysis interfaces use the study-approved firmware and software versions.",
+                            "name": "Install validated firmware and software"
+                          },
+                          {
+                            "children": [],
+                            "description": "Perform the manufacturer-approved calibration procedures for inertial sensors, pressure sensors, force plates, cameras, or other systems used to quantify walking performance.",
+                            "name": "Calibrate motion and gait sensors"
+                          },
+                          {
+                            "children": [],
+                            "description": "Verify joint-angle sensing, actuator output, assistance settings, alignment references, and emergency-stop functionality before using the device with prospective participants.",
+                            "name": "Calibrate the robotic exoskeleton"
+                          },
+                          {
+                            "children": [],
+                            "description": "Prepare adjustable device dimensions, sensor placement references, body-size inputs, walking speed limits, and recording parameters for the anticipated post-stroke participant population.",
+                            "name": "Configure participant-specific measurement settings"
+                          },
+                          {
+                            "children": [],
+                            "description": "Run an end-to-end test using a known movement or test subject to confirm synchronized data capture, correct file labeling, adequate storage, emergency procedures, and reliable equipment operation.",
+                            "name": "Verify recording and safety readiness"
+                          }
+                        ],
+                        "description": "Verify that blood pressure cuffs, pulse oximeters, thermometers, and heart-rate monitors are functional, appropriately sized, and within calibration requirements.",
+                        "name": "Prepare calibrated measurement equipment"
+                      },
+                      {
+                        "children": [],
+                        "description": "Have the participant rest, avoid recent exertion when feasible, and remain seated or positioned safely before measurements begin.",
+                        "name": "Confirm participant readiness"
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "children": [],
+                                "description": "Specify the calendar dates, daily time range, and duration during which participant assessments will occur.",
+                                "name": "Define the measurement window"
+                              },
+                              {
+                                "children": [],
+                                "description": "Determine when the standardized period begins after screening, consent, and baseline eligibility confirmation.",
+                                "name": "Set measurement timing relative to enrollment"
+                              },
+                              {
+                                "children": [],
+                                "description": "Collect availability constraints and identify appointment slots that participants can reliably attend.",
+                                "name": "Coordinate participant availability"
+                              },
+                              {
+                                "children": [
+                                  {
+                                    "children": [],
+                                    "description": "Specify the space, accessibility, safety, equipment, and staffing requirements for participant screening and gait assessments.",
+                                    "name": "Define facility requirements"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Locate rehabilitation clinics, hospitals, laboratories, or community sites that can accommodate post-stroke participants and exoskeleton assessments.",
+                                    "name": "Identify suitable facilities"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Confirm wheelchair access, accessible entrances and restrooms, parking or public transport options, and practical arrival procedures.",
+                                    "name": "Verify accessibility and transport"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Check that the facility has sufficient floor area, walking paths, ceiling clearance, power access, and surfaces suitable for the wearable robotic exoskeleton.",
+                                    "name": "Confirm exoskeleton compatibility"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Obtain suitable dates and recurring time slots that support recruitment screening, baseline assessments, and participant appointment demand.",
+                                    "name": "Schedule assessment availability"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Coordinate emergency response, fall-management, infection-control, equipment-storage, and participant supervision procedures with facility personnel.",
+                                    "name": "Establish facility safety procedures"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Document room bookings, access permissions, costs, cancellation terms, responsible contacts, and operational arrangements before recruitment begins.",
+                                    "name": "Finalize reservation agreements"
+                                  }
+                                ],
+                                "description": "Book the gait laboratory, rehabilitation space, or clinical area needed for standardized measurements.",
+                                "name": "Reserve assessment facilities"
+                              },
+                              {
+                                "children": [
+                                  {
+                                    "children": [],
+                                    "description": "Specify which staff members will conduct screening, consent discussions, eligibility assessments, gait evaluations, and recruitment documentation.",
+                                    "name": "Define staff roles and responsibilities"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Select clinicians or research staff with relevant expertise in post-stroke rehabilitation, neurological assessment, and participant-facing research procedures.",
+                                    "name": "Identify qualified assessment personnel"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Confirm staff competency in human-subjects protection, informed consent, post-stroke safety, mobility assistance, and study-specific procedures.",
+                                    "name": "Verify required credentials and training"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Prepare staff to recognize contraindications, assist with device fitting and walking trials, manage falls or adverse events, and follow emergency procedures.",
+                                    "name": "Train staff on exoskeleton-related safety"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Use approved scripts, checklists, forms, and operating procedures so recruitment assessments are delivered consistently across staff and participants.",
+                                    "name": "Standardize screening and assessment procedures"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Evaluate staff through supervised practice, demonstrations, or mock assessments and retain records showing authorization to conduct recruitment and screening activities.",
+                                    "name": "Assess and document staff competency"
+                                  }
+                                ],
+                                "description": "Schedule qualified personnel to administer the same measurement procedures across all recruited participants.",
+                                "name": "Assign trained assessment staff"
+                              },
+                              {
+                                "children": [
+                                  {
+                                    "children": [],
+                                    "description": "Specify the exact wearable robotic exoskeleton, controller, attachments, and software configuration required for participant assessments and study sessions.",
+                                    "name": "Confirm exoskeleton model and configuration"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Secure ownership, rental, loan, or manufacturer-supplied access to the exoskeleton and all required accessories for the recruitment period.",
+                                    "name": "Verify equipment procurement or loan arrangements"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Reserve the exoskeleton, charging facilities, treatment space, and supporting equipment for screening, fitting, demonstrations, and enrollment visits.",
+                                    "name": "Schedule equipment access"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Check mechanical components, batteries, sensors, straps, footwear interfaces, and safety features to ensure the equipment is operational before participant contact.",
+                                    "name": "Inspect equipment condition"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Install approved software, configure study settings, calibrate sensors, and confirm that data recording and export functions work correctly.",
+                                    "name": "Complete calibration and software setup"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Organize measurement tools, adjustable components, hygiene materials, replacement straps, and other supplies needed to fit the exoskeleton to different participants.",
+                                    "name": "Prepare participant sizing and fitting supplies"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Define procedures for routine servicing, battery replacement, technical support, equipment failure, and backup access so recruitment activities are not disrupted.",
+                                    "name": "Establish maintenance and contingency coverage"
+                                  }
+                                ],
+                                "description": "Ensure the wearable robotic exoskeleton, gait sensors, calibration tools, and recording systems are available during each appointment.",
+                                "name": "Arrange equipment availability"
+                              },
+                              {
+                                "children": [
+                                  {
+                                    "children": [],
+                                    "description": "Contact each eligible participant to verify the agreed appointment date and time still work.",
+                                    "name": "Reconfirm participant availability"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Book screening, baseline assessment, training, intervention, and follow-up visits according to the study protocol.",
+                                    "name": "Schedule required study visits"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Determine how participants will travel to the research site and arrange approved transportation support when needed.",
+                                    "name": "Coordinate transportation arrangements"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Confirm whether a caregiver or support person must attend visits and record their availability.",
+                                    "name": "Verify caregiver or companion attendance"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Send information about the site address, entrance, parking, check-in location, accessibility features, and arrival time.",
+                                    "name": "Provide arrival and access instructions"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Tell participants what to bring or wear, including mobility aids, medication information, comfortable clothing, and suitable footwear.",
+                                    "name": "Prepare visit-specific requirements"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Record appointment confirmations, reminders, cancellations, rescheduling needs, transportation issues, and other logistical updates in the recruitment system.",
+                                    "name": "Document confirmations and changes"
+                                  }
+                                ],
+                                "description": "Send participants finalized appointment details, preparation instructions, transportation information, and procedures for reporting delays or cancellations.",
+                                "name": "Confirm appointments and logistics"
+                              }
+                            ],
+                            "description": "Measure resting heart rate at a consistent time and under comparable pre-assessment conditions for every candidate.",
+                            "name": "Schedule a standardized measurement period"
+                          },
+                          {
+                            "children": [],
+                            "description": "Have the candidate sit or recline quietly and avoid recent exertion, caffeine, nicotine, or other factors that may temporarily alter heart rate.",
+                            "name": "Prepare the participant for rest"
+                          },
+                          {
+                            "children": [
+                              {
+                                "children": [],
+                                "description": "Specify which gait, mobility, safety, and participant-characteristic outcomes the device must measure during recruitment screening and study assessments.",
+                                "name": "Define measurement objectives"
+                              },
+                              {
+                                "children": [],
+                                "description": "Establish requirements for accuracy, reliability, wearability, compatibility with post-stroke mobility limitations, and use alongside the wearable robotic exoskeleton.",
+                                "name": "Set device selection criteria"
+                              },
+                              {
+                                "children": [
+                                  {
+                                    "children": [],
+                                    "description": "Establish recruitment-relevant criteria such as intended users, assistance modes, mobility requirements, fitting constraints, safety features, and study compatibility.",
+                                    "name": "Define device comparison criteria"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Compile wearable robotic exoskeleton models that are available, investigational, or accessible through collaborating clinics and research institutions.",
+                                    "name": "Inventory candidate exoskeletons"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Assess whether each device supports the gait impairments, assistance needs, body dimensions, functional levels, and medical profiles represented in the target participant population.",
+                                    "name": "Verify post-stroke suitability"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Determine how each device's requirements affect inclusion and exclusion criteria, including strength, balance, range of motion, cognitive capacity, and walking ability.",
+                                    "name": "Review eligibility implications"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Compare device-specific risks, contraindications, supervision needs, emergency procedures, and screening information required before enrollment.",
+                                    "name": "Assess participant safety requirements"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Estimate the size and accessibility of the eligible participant pool based on device availability, fitting limitations, training demands, clinic infrastructure, and geographic reach.",
+                                    "name": "Evaluate recruitment feasibility"
+                                  }
+                                ],
+                                "description": "Evaluate available measurement devices against the predefined technical, clinical, usability, and study-operational requirements.",
+                                "name": "Compare candidate devices"
+                              },
+                              {
+                                "children": [
+                                  {
+                                    "children": [],
+                                    "description": "Verify that the exoskeleton is designed and cleared for individuals with post-stroke gait impairments matching the study population.",
+                                    "name": "Confirm intended-use population"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Confirm fit ranges, adjustment mechanisms, and compatibility with participants’ body sizes and limb proportions.",
+                                    "name": "Check device dimensions and adjustability"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Verify device weight, maximum supported body weight, and any limb-loading or joint-loading restrictions relevant to screening.",
+                                    "name": "Review weight and physical-load limits"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Confirm supported walking modes, assistance levels, speed ranges, step parameters, and adaptability to post-stroke gait patterns.",
+                                    "name": "Validate gait-assistance capabilities"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Identify the minimum standing, stepping, balance, strength, and walking abilities required for safe device operation.",
+                                    "name": "Confirm mobility and balance requirements"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Verify harness requirements, fall protection, emergency stop functions, monitoring systems, alarms, and safe shutdown procedures.",
+                                    "name": "Review safety and emergency features"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Confirm battery duration, setup time, required supervision, surface requirements, space needs, and restrictions affecting participant eligibility.",
+                                    "name": "Check operational and environmental constraints"
+                                  }
+                                ],
+                                "description": "Inspect sensor configuration, sampling rate, battery life, data storage, connectivity, calibration procedures, and software compatibility.",
+                                "name": "Verify technical specifications"
+                              },
+                              {
+                                "children": [],
+                                "description": "Check whether the device can be safely and comfortably applied to participants with hemiparesis, balance impairment, spasticity, or limited dexterity.",
+                                "name": "Assess participant usability"
+                              },
+                              {
+                                "children": [],
+                                "description": "Confirm that the measurement device does not interfere with exoskeleton fitting, walking assistance, movement, safety systems, or therapist supervision.",
+                                "name": "Test device-exoskeleton integration"
+                              },
+                              {
+                                "children": [],
+                                "description": "Conduct trial measurements, identify setup or data-quality problems, and document standardized procedures for device preparation, placement, operation, and inspection.",
+                                "name": "Pilot and document the measurement workflow"
+                              }
+                            ],
+                            "description": "Use a validated heart-rate monitor or clinical vital-sign device and verify that it is functioning and appropriately positioned.",
+                            "name": "Select and inspect the measurement device"
+                          },
+                          {
+                            "children": [
+                              {
+                                "children": [],
+                                "description": "Specify how long participants should rest or acclimate before gait measurements begin.",
+                                "name": "Define the stabilization period"
+                              },
+                              {
+                                "children": [
+                                  {
+                                    "children": [],
+                                    "description": "Set up a nearby chair, wheelchair, or supported standing device with adequate space, stability, and clear access.",
+                                    "name": "Prepare an appropriate rest area"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Tell potential participants that they may request seated or supported rest at any time during recruitment-related walking or demonstration activities.",
+                                    "name": "Explain rest availability"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Watch for signs such as slowing, loss of balance, shortness of breath, weakness, dizziness, or visible exertion that indicate a need to stop.",
+                                    "name": "Monitor fatigue and instability"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Invite the person to sit or use supported rest before fatigue becomes pronounced, especially after standing, walking, or equipment demonstrations.",
+                                    "name": "Offer rest proactively"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Provide appropriate staff assistance and mobility support when the person moves from standing or walking into a seated or supported position.",
+                                    "name": "Assist with safe transitions"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Ensure stable positioning, suitable posture, access to mobility aids, and sufficient time for recovery without pressure to continue.",
+                                    "name": "Maintain comfort during rest"
+                                  },
+                                  {
+                                    "children": [],
+                                    "description": "Record rest requests, observed fatigue, assistance required, recovery time, and any safety concerns relevant to recruitment eligibility or visit planning.",
+                                    "name": "Document rest-related observations"
+                                  }
+                                ],
+                                "description": "Give participants sufficient time in a safe seated or supported position to reduce fatigue and physiological fluctuation.",
+                                "name": "Provide seated or supported rest"
+                              },
+                              {
+                                "children": [],
+                                "description": "Allow participants to become comfortable with the device, its fit, and its operating sensations before assessment.",
+                                "name": "Acclimate participants to the exoskeleton"
+                              },
+                              {
+                                "children": [],
+                                "description": "Adjust harnesses, straps, alignment, and assistance settings before the stabilization interval starts.",
+                                "name": "Complete initial device fitting"
+                              },
+                              {
+                                "children": [],
+                                "description": "Ask participants about pain, dizziness, spasticity, exertion, and fatigue and postpone testing if recovery is incomplete.",
+                                "name": "Verify symptom and fatigue readiness"
+                              },
+                              {
+                                "children": [],
+                                "description": "Use the same sequence of rest, device familiarization, safety checks, and readiness confirmation for every participant.",
+                                "name": "Standardize the pre-measurement routine"
+                              }
+                            ],
+                            "description": "Wait until the candidate has remained still and relaxed long enough for heart rate to reach a stable resting level.",
+                            "name": "Allow stabilization before measurement"
+                          },
+                          {
+                            "children": [],
+                            "description": "Repeat the measurement after additional rest when the value is unexpected, unstable, or potentially affected by device error.",
+                            "name": "Repeat or verify an abnormal reading"
+                          },
+                          {
+                            "children": [],
+                            "description": "Record the heart rate, time, body position, device used, relevant pre-measurement conditions, and any symptoms or irregular rhythm observations.",
+                            "name": "Document the result and measurement conditions"
+                          }
+                        ],
+                        "description": "Measure and document the participant’s resting pulse using a validated monitor or standardized manual method.",
+                        "name": "Record resting heart rate"
+                      },
+                      {
+                        "children": [],
+                        "description": "Obtain and record blood pressure using the correct cuff size, arm position, and repeated readings when required by the protocol.",
+                        "name": "Measure resting blood pressure"
+                      },
+                      {
+                        "children": [],
+                        "description": "Measure and document peripheral oxygen saturation with a properly positioned pulse oximeter.",
+                        "name": "Assess oxygen saturation"
+                      },
+                      {
+                        "children": [],
+                        "description": "Obtain and record temperature using the study-approved method and device.",
+                        "name": "Measure body temperature"
+                      },
+                      {
+                        "children": [],
+                        "description": "Compare vital signs with study thresholds, document measurement conditions and values, and escalate abnormal findings before recruitment or gait-testing procedures proceed.",
+                        "name": "Review and document safety findings"
+                      }
+                    ],
+                    "description": "Record resting blood pressure, heart rate, oxygen saturation, and rhythm when feasible, using predefined thresholds for repeat measurement or exclusion.",
+                    "name": "Measure baseline vital signs"
+                  },
+                  {
+                    "children": [],
+                    "description": "Evaluate symptoms and vital-sign changes during safe, low-intensity movement or routine mobility to identify abnormal cardiovascular responses before exoskeleton training.",
+                    "name": "Assess response to basic activity"
+                  },
+                  {
+                    "children": [],
+                    "description": "Document cardiovascular medications, adherence, recent dose changes, and treatments that may indicate unresolved instability or affect exercise safety.",
+                    "name": "Review medications and recent treatment changes"
+                  },
+                  {
+                    "children": [],
+                    "description": "Refer candidates with concerning history, symptoms, abnormal measurements, or unclear risk to their physician or a qualified clinician for clearance before enrollment.",
+                    "name": "Obtain medical clearance when indicated"
+                  }
+                ],
+                "description": "Exclude candidates with recent serious cardiac events, uncontrolled arrhythmias, unstable angina, or other cardiovascular conditions that make assisted walking unsafe.",
+                "name": "Screen for unstable cardiovascular conditions"
+              },
+              {
+                "children": [],
+                "description": "Exclude candidates with fractures, severe osteoporosis, unstable joints, major contractures, or other orthopedic conditions incompatible with exoskeleton loading.",
+                "name": "Assess musculoskeletal load-bearing limitations"
+              },
+              {
+                "children": [],
+                "description": "Check for open wounds, active ulcers, severe skin disease, or impaired tissue tolerance at areas contacting the device, including the pelvis, legs, and feet.",
+                "name": "Evaluate skin and pressure-injury risk"
+              },
+              {
+                "children": [],
+                "description": "Exclude candidates with uncontrolled seizures, rapidly worsening neurological disease, or impairments that could make robotic gait training medically unsafe.",
+                "name": "Identify uncontrolled neurological conditions"
+              },
+              {
+                "children": [],
+                "description": "Determine whether profound postural instability, frequent unexplained falls, or inability to follow supported standing procedures creates unacceptable injury risk.",
+                "name": "Check for severe balance and fall-risk hazards"
+              },
+              {
+                "children": [],
+                "description": "Identify implanted devices, active treatments, or medication-related risks that could interfere with exoskeleton operation, exertion tolerance, or safe gait training.",
+                "name": "Review contraindicating medical devices or treatments"
+              },
+              {
+                "children": [],
+                "description": "Exclude candidates with acute infection, fever, uncontrolled blood pressure, respiratory instability, or other unresolved conditions requiring medical stabilization before participation.",
+                "name": "Confirm acute illness and vital-sign stability"
+              }
+            ],
+            "description": "Screen for cardiovascular, neurological, orthopedic, skin, pain, and other conditions that could make participation unsafe.",
+            "name": "Define medical safety exclusions"
+          },
+          {
+            "children": [],
+            "description": "Determine the capacity needed to understand instructions, provide informed consent, communicate discomfort, and follow the rehabilitation protocol.",
+            "name": "Establish cognitive and communication requirements"
+          },
+          {
+            "children": [],
+            "description": "Identify participant characteristics such as age, sex, affected side, impairment severity, and comorbidities for balanced enrollment or planned subgroup analysis.",
+            "name": "Set demographic and clinical stratification factors"
+          },
+          {
+            "children": [],
+            "description": "Translate all criteria into measurable screening questions, assessments, documentation requirements, and decision rules for consistent enrollment decisions.",
+            "name": "Operationalize eligibility screening"
+          }
+        ],
+        "description": "The characteristics, clinical criteria, functional requirements, safety considerations, and exclusion factors that define the target participant population.",
+        "name": "Participant eligibility and population definition"
+      }
+    ],
+    "description": null,
+    "name": "participant recruitment for a post-stroke gait rehabilitation study using a wearable robotic exoskeleton"
+  }
+}

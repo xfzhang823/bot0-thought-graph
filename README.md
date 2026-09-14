@@ -87,6 +87,11 @@ Graph `vertical=1` returns the root concept and its first-level subtopics; `vert
 
 When no graph-shape bounds are supplied, `generate_thought_graph()` uses the `balanced` adaptive exploration profile. Callers may select `exploration="focused"`, `"balanced"`, or `"rich"` to change how readily horizontal directions and vertical branches continue. Adaptive exploration cannot be combined with `horizontal`/`vertical` or legacy `breadth`/`depth`. The profiles control continuation decisions rather than fixed graph sizes.
 
+Adaptive horizontal exploration uses small internal candidate batches and
+evaluates their distinctness and marginal value before requesting more peer
+coverage. This is an implementation detail; callers do not configure the
+batch size.
+
 Adaptive traversal may retain a useful child in the graph without recursively expanding that branch when its marginal value is insufficient. Semantic stopping is distinct from internal safety stopping; safety guards prevent runaway adaptive growth and return the valid partial graph produced so far. These guards are internal and are not ordinary graph-shape controls.
 
 ## Provider support

@@ -188,6 +188,12 @@ The exploration profile determines how much marginal value is required to contin
 
 Horizontal exploration should remain naturally narrow when the concept does not warrant multiple peer directions. A valid adaptive result may contain only one horizontal direction.
 
+Adaptive horizontal probing uses small bounded candidate batches. The
+orchestration layer evaluates each returned candidate for distinctness and
+marginal value, then requests another batch only when the current batch shows
+that additional peer coverage is warranted. Batch sizing remains an internal
+efficiency detail rather than a public graph-shape control.
+
 ## Adaptive Vertical Behavior
 
 During adaptive exploration, vertical generation should answer:

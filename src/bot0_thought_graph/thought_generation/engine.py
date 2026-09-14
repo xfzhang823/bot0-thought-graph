@@ -13,6 +13,7 @@ from bot0_thought_graph.models import (
     Thought,
     ThoughtArray,
     ThoughtGraph,
+    ThoughtJSONModel,
     ThoughtNode,
 )
 from bot0_thought_graph.prompts import (
@@ -26,6 +27,10 @@ from .expansion import expand_idea, expand_vertical
 from .generation import generate_horizontal
 from .indexing import index_idea
 from .ranking import convert_clusters_to_idea, select_clusters
+
+
+# Default maximum provider-response tokens for thought-generation calls.
+_DEFAULT_MAX_TOKENS = 1056
 
 
 @dataclass(frozen=True)
@@ -60,7 +65,7 @@ class HorizontalGenerationRequest:
     num_clusters: int | None = None
     top_n: int | None = None
     temperature: float = 0.7
-    max_tokens: int = 1056
+    max_tokens: int = _DEFAULT_MAX_TOKENS
     timeout: float | None = None
     prompt_template: str | None = None
 
@@ -79,9 +84,9 @@ class VerticalGenerationRequest:
         model: Provider-specific model identifier.
         progression_type: Semantic relationship expected between the parent
             thought and its generated children. Supported prompt-guided values
-            include ``implementation_steps``, ``simple_to_complex``,
+            are ``implementation_steps``, ``simple_to_complex``,
             ``chronological``, ``problem_solution``, and
-            ``implementation_steps`` and ``prerequisite_dependency``.
+            ``prerequisite_dependency``.
         num_sub_thoughts: Maximum number of child thoughts to request.
         temperature: Sampling temperature passed to the language model.
         max_tokens: Maximum number of tokens allowed in the provider response.
@@ -96,31 +101,35 @@ class VerticalGenerationRequest:
     progression_type: ProgressionType = ProgressionType.IMPLEMENTATION_STEPS
     num_sub_thoughts: int = 7
     temperature: float = 0.7
-    max_tokens: int = 1056
+    max_tokens: int = _DEFAULT_MAX_TOKENS
     timeout: float | None = None
     prompt_template: str | None = None
 
     def __post_init__(self) -> None:
         """Normalize compatible raw strings to the public enum."""
         if not isinstance(self.progression_type, ProgressionType):
-            object.__setattr__(self, "progression_type", ProgressionType(self.progression_type))
+            object.__setattr__(
+                self, "progression_type", ProgressionType(self.progression_type)
+            )
 
 
 class _ExplorationReason(str, Enum):
     """Stable internal categories for adaptive continuation diagnostics."""
 
+    BRANCH_PRUNED = "branch_pruned"
+    CALL_BUDGET = "call_budget"
     DEPTH_LIMIT = "depth_limit"
+    EXPANSION_BUDGET = "expansion_budget"
     INSUFFICIENT_DISTINCTNESS = "insufficient_distinctness"
     INSUFFICIENT_NOVELTY = "insufficient_novelty"
+    INSUFFICIENT_RELEVANCE = "insufficient_relevance"
+    INSUFFICIENT_MARGINAL_VALUE = "insufficient_marginal_value"
     INTERNAL_CANDIDATE_LIMIT = "internal_candidate_limit"
     MATERIAL_DISTINCT = "materially_distinct"
     MEANINGFUL_CHILDREN = "meaningful_children"
     NATURAL_ENDPOINT = "natural_endpoint"
     NO_CANDIDATE = "no_candidate"
     NO_CHILDREN = "no_children"
-    BRANCH_PRUNED = "branch_pruned"
-    CALL_BUDGET = "call_budget"
-    EXPANSION_BUDGET = "expansion_budget"
     NODE_BUDGET = "node_budget"
 
 
@@ -175,6 +184,9 @@ class ThoughtGraphEngine:
     _DEFAULT_VERTICAL_CHILDREN = 7
     """Internal child cap for new explicit horizontal/vertical graph calls."""
 
+    _ADAPTIVE_VERTICAL_CHILDREN = 4
+    """Smaller internal child request used only by adaptive expansion."""
+
     MAX_FACADE_DEPTH = 8
     """Maximum number of generated child levels supported by new mode."""
 
@@ -182,7 +194,10 @@ class ThoughtGraphEngine:
     """Maximum legacy ``depth`` retained for backward compatibility."""
 
     _ADAPTIVE_MAX_HORIZONTAL = 8
-    """Internal guard against unbounded horizontal candidate generation."""
+    """Internal guard against unbounded retained horizontal directions."""
+
+    _ADAPTIVE_HORIZONTAL_CANDIDATES = 3
+    """Small internal candidate batch used by adaptive horizontal probing."""
 
     _ADAPTIVE_PROFILE_OVERLAP_LIMITS = {
         "focused": 0.25,
@@ -194,6 +209,93 @@ class ThoughtGraphEngine:
         "balanced": 0.25,
         "rich": 0.50,
     }
+    _ADAPTIVE_RELEVANCE_LIMITS = {
+        "focused": 0.20,
+        "balanced": 0.08,
+        "rich": 0.04,
+    }
+    _ADAPTIVE_MARGINAL_VALUE_LIMITS = {
+        "focused": 0.55,
+        "balanced": 0.35,
+        "rich": 0.20,
+    }
+
+    _ADAPTIVE_DETAIL_TERMS = frozenset(
+        {
+            "assess",
+            "assessment",
+            "check",
+            "checking",
+            "choose",
+            "clarify",
+            "conduct",
+            "configure",
+            "configuration",
+            "confirm",
+            "define",
+            "document",
+            "documentation",
+            "detail",
+            "criteria",
+            "criterion",
+            "establish",
+            "further",
+            "handle",
+            "handling",
+            "identify",
+            "installation",
+            "install",
+            "logistics",
+            "measurement",
+            "monitor",
+            "monitoring",
+            "obtain",
+            "plan",
+            "planning",
+            "procedure",
+            "process",
+            "protocol",
+            "record",
+            "review",
+            "rule",
+            "rules",
+            "screen",
+            "screening",
+            "select",
+            "set",
+            "setup",
+            "specify",
+            "specification",
+            "status",
+            "tracking",
+            "verify",
+            "workflow",
+        }
+    )
+    _ADAPTIVE_PROCEDURAL_TERMS = frozenset(
+        {
+            "assess",
+            "choose",
+            "clarify",
+            "conduct",
+            "configure",
+            "confirm",
+            "define",
+            "document",
+            "establish",
+            "identify",
+            "implement",
+            "obtain",
+            "plan",
+            "record",
+            "review",
+            "screen",
+            "select",
+            "set",
+            "specify",
+            "verify",
+        }
+    )
 
     _ADAPTIVE_MAX_PROVIDER_CALLS = 64
     """Internal profile-independent provider-call guard."""
@@ -258,7 +360,9 @@ class ThoughtGraphEngine:
         if isinstance(provider, str):
             provider_name = self._require_text(provider, "provider").lower()
             self.provider = create_provider(provider_name)
-            resolved_model = model if model is not None else default_model(provider_name)
+            resolved_model = (
+                model if model is not None else default_model(provider_name)
+            )
         else:
             self.provider = provider
             resolved_model = model if model is not None else "default"
@@ -324,7 +428,7 @@ class ThoughtGraphEngine:
         )
         return convert_clusters_to_idea(clusters)
 
-    def expand(self, request: VerticalGenerationRequest):
+    def expand(self, request: VerticalGenerationRequest) -> ThoughtJSONModel:
         """Expand one thought using the typed vertical API.
 
         The selected thought is expanded within the context of the root idea.
@@ -370,7 +474,7 @@ class ThoughtGraphEngine:
         progression_type: ProgressionType = ProgressionType.IMPLEMENTATION_STEPS,
         num_sub_thoughts: int = 5,
         temperature: float = 0.7,
-        max_tokens: int = 1056,
+        max_tokens: int = _DEFAULT_MAX_TOKENS,
         timeout: float | None = None,
     ) -> IdeaJSONModel:
         """Expand every top-level thought in an idea.
@@ -480,7 +584,7 @@ class ThoughtGraphEngine:
         subtopic: str,
         *,
         max_details: int = 8,
-        max_tokens: int = 1056,
+        max_tokens: int = _DEFAULT_MAX_TOKENS,
         model: str | None = None,
         progression_type: ProgressionType = ProgressionType.IMPLEMENTATION_STEPS,
     ) -> list[str]:
@@ -528,7 +632,7 @@ class ThoughtGraphEngine:
         concept: str,
         *,
         max_subtopics: int = 8,
-        max_tokens: int = 1056,
+        max_tokens: int = _DEFAULT_MAX_TOKENS,
         ranked: bool = False,
         model: str | None = None,
     ) -> ThoughtArray:
@@ -618,6 +722,8 @@ class ThoughtGraphEngine:
 
         When no graph-shape bounds are supplied, ``exploration`` defaults to
         ``"balanced"`` and continuation is evaluated as the graph develops.
+        Adaptive continuation requires both sufficient novelty and a
+        provider-neutral root-goal relevance signal.
         Adaptive exploration is opt-in when a profile is supplied and cannot
         be combined with explicit or legacy graph-shape bounds.
 
@@ -775,7 +881,7 @@ class ThoughtGraphEngine:
         model: str | None,
         progression_type: ProgressionType,
     ) -> ThoughtNode:
-        """Generate a graph by evaluating content novelty at each continuation."""
+        """Generate a graph using novelty and root-goal relevance at continuation."""
         root = ThoughtNode(name=concept)
         self._adaptive_node_count = 1
         root.children = self._generate_adaptive_horizontal(
@@ -804,70 +910,94 @@ class ThoughtGraphEngine:
         exploration: str,
         model: str | None,
     ) -> list[ThoughtNode]:
-        """Generate peer directions until novelty no longer clears the profile."""
+        """Generate peer directions in small batches until value runs out."""
         selected: list[ThoughtNode] = []
         overlap_limit = self._profile_overlap_limit(exploration)
 
-        for _ in range(self._ADAPTIVE_MAX_HORIZONTAL):
+        while len(selected) < self._ADAPTIVE_MAX_HORIZONTAL:
             if self._adaptive_safety_stopped:
                 break
             if not self._consume_adaptive_work(level=0):
                 break
+            batch_size = min(
+                self._ADAPTIVE_HORIZONTAL_CANDIDATES,
+                self._ADAPTIVE_MAX_HORIZONTAL - len(selected),
+            )
             array = self.generate_array_of_thoughts(
                 concept,
-                max_subtopics=1,
+                max_subtopics=batch_size,
                 ranked=False,
                 model=model,
             )
             if not array.thoughts:
-                self._record_exploration_decision(
-                    axis="horizontal",
-                    action="stop",
-                    reason=_ExplorationReason.NO_CANDIDATE,
-                    level=0,
-                )
+                self._record_horizontal("stop", _ExplorationReason.NO_CANDIDATE)
                 break
 
-            candidate = array.thoughts[0]
             existing_names = [item.name for item in selected]
-            if not self._is_meaningful_candidate(
-                candidate.name,
-                existing_names,
-                overlap_limit=overlap_limit,
-            ):
-                self._record_exploration_decision(
-                    axis="horizontal",
-                    action="stop",
-                    reason=_ExplorationReason.INSUFFICIENT_DISTINCTNESS,
-                    level=0,
-                    thought=candidate.name,
+            accepted = 0
+            first_rejection: str | None = None
+            batch_saturated = False
+            for candidate in array.thoughts:
+                if batch_saturated:
+                    self._record_horizontal(
+                        "skip",
+                        _ExplorationReason.INSUFFICIENT_DISTINCTNESS,
+                        candidate.name,
+                    )
+                    continue
+                if not self._is_meaningful_candidate(
+                    candidate.name,
+                    existing_names,
+                    overlap_limit=overlap_limit,
+                ):
+                    first_rejection = first_rejection or candidate.name
+                    self._record_horizontal(
+                        "skip",
+                        _ExplorationReason.INSUFFICIENT_DISTINCTNESS,
+                        candidate.name,
+                    )
+                    batch_saturated = True
+                    continue
+
+                if self._adaptive_node_count >= self._ADAPTIVE_MAX_NODES:
+                    self._record_safety_stop(
+                        _ExplorationReason.NODE_BUDGET,
+                        level=0,
+                        thought=candidate.name,
+                    )
+                    break
+                selected.append(
+                    ThoughtNode(name=candidate.name, description=candidate.description)
+                )
+                existing_names.append(candidate.name)
+                self._adaptive_node_count += 1
+                accepted += 1
+                self._record_horizontal(
+                    "continue",
+                    _ExplorationReason.MATERIAL_DISTINCT,
+                    candidate.name,
+                )
+
+            if self._adaptive_safety_stopped:
+                break
+            if accepted == 0:
+                self._record_horizontal(
+                    "stop",
+                    _ExplorationReason.INSUFFICIENT_DISTINCTNESS,
+                    first_rejection,
+                )
+                break
+            if first_rejection is not None or len(array.thoughts) < batch_size:
+                self._record_horizontal(
+                    "stop",
+                    _ExplorationReason.INSUFFICIENT_DISTINCTNESS,
+                    first_rejection,
                 )
                 break
 
-            if self._adaptive_node_count >= self._ADAPTIVE_MAX_NODES:
-                self._record_safety_stop(
-                    _ExplorationReason.NODE_BUDGET,
-                    level=0,
-                    thought=candidate.name,
-                )
-                break
-            selected.append(
-                ThoughtNode(name=candidate.name, description=candidate.description)
-            )
-            self._adaptive_node_count += 1
-            self._record_exploration_decision(
-                axis="horizontal",
-                action="continue",
-                reason=_ExplorationReason.MATERIAL_DISTINCT,
-                level=0,
-                thought=candidate.name,
-            )
-        else:
-            self._record_exploration_decision(
-                axis="horizontal",
-                action="stop",
-                reason=_ExplorationReason.INTERNAL_CANDIDATE_LIMIT,
-                level=0,
+        if len(selected) >= self._ADAPTIVE_MAX_HORIZONTAL:
+            self._record_horizontal(
+                "stop", _ExplorationReason.INTERNAL_CANDIDATE_LIMIT
             )
 
         return selected
@@ -885,19 +1015,14 @@ class ThoughtGraphEngine:
     ) -> None:
         """Expand one branch while each generated level remains meaningful."""
         if level >= self.MAX_FACADE_DEPTH:
-            self._record_exploration_decision(
-                axis="vertical",
-                action="stop",
-                reason=_ExplorationReason.DEPTH_LIMIT,
-                level=level,
-                thought=node.name,
+            self._record_vertical(
+                "stop", _ExplorationReason.DEPTH_LIMIT, level=level, thought=node.name
             )
             return
         if self._is_natural_endpoint(node.name):
-            self._record_exploration_decision(
-                axis="vertical",
-                action="stop",
-                reason=_ExplorationReason.NATURAL_ENDPOINT,
+            self._record_vertical(
+                "stop",
+                _ExplorationReason.NATURAL_ENDPOINT,
                 level=level,
                 thought=node.name,
             )
@@ -909,8 +1034,8 @@ class ThoughtGraphEngine:
         result = self._expand_subtopic_result(
             concept,
             node.name,
-            max_details=self._DEFAULT_VERTICAL_CHILDREN,
-            max_tokens=1056,
+            max_details=self._ADAPTIVE_VERTICAL_CHILDREN,
+            max_tokens=_DEFAULT_MAX_TOKENS,
             model=model,
             progression_type=progression_type,
         )
@@ -941,21 +1066,14 @@ class ThoughtGraphEngine:
                 if not result.sub_thoughts
                 else _ExplorationReason.INSUFFICIENT_NOVELTY
             )
-            self._record_exploration_decision(
-                axis="vertical",
-                action="stop",
-                reason=reason,
-                level=level,
-                thought=node.name,
-            )
+            self._record_vertical("stop", reason, level=level, thought=node.name)
             node.children = []
             return
 
         node.children = children
-        self._record_exploration_decision(
-            axis="vertical",
-            action="continue",
-            reason=_ExplorationReason.MEANINGFUL_CHILDREN,
+        self._record_vertical(
+            "continue",
+            _ExplorationReason.MEANINGFUL_CHILDREN,
             level=level,
             thought=node.name,
         )
@@ -963,10 +1081,9 @@ class ThoughtGraphEngine:
             if self._adaptive_safety_stopped:
                 break
             if self._is_natural_endpoint(child.name):
-                self._record_exploration_decision(
-                    axis="vertical",
-                    action="retain",
-                    reason=_ExplorationReason.NATURAL_ENDPOINT,
+                self._record_vertical(
+                    "retain",
+                    _ExplorationReason.NATURAL_ENDPOINT,
                     level=level + 1,
                     thought=child.name,
                 )
@@ -977,10 +1094,37 @@ class ThoughtGraphEngine:
                 path,
                 overlap_limit=branch_limit,
             ):
-                self._record_exploration_decision(
-                    axis="vertical",
-                    action="retain",
-                    reason=_ExplorationReason.BRANCH_PRUNED,
+                self._record_vertical(
+                    "retain",
+                    _ExplorationReason.BRANCH_PRUNED,
+                    level=level + 1,
+                    thought=child.name,
+                )
+                continue
+            if not self._is_relevant_candidate(
+                concept,
+                path,
+                child.name,
+                child.description,
+                exploration=exploration,
+            ):
+                self._record_vertical(
+                    "retain",
+                    _ExplorationReason.INSUFFICIENT_RELEVANCE,
+                    level=level + 1,
+                    thought=child.name,
+                )
+                continue
+            if not self._is_marginally_valuable_candidate(
+                concept,
+                path,
+                child.name,
+                child.description,
+                exploration=exploration,
+            ):
+                self._record_vertical(
+                    "retain",
+                    _ExplorationReason.INSUFFICIENT_MARGINAL_VALUE,
                     level=level + 1,
                     thought=child.name,
                 )
@@ -1061,6 +1205,38 @@ class ThoughtGraphEngine:
             )
         )
 
+    def _record_horizontal(
+        self,
+        action: str,
+        reason: _ExplorationReason,
+        thought: str | None = None,
+    ) -> None:
+        """Record a root-level horizontal continuation decision."""
+        self._record_exploration_decision(
+            axis="horizontal",
+            action=action,
+            reason=reason,
+            level=0,
+            thought=thought,
+        )
+
+    def _record_vertical(
+        self,
+        action: str,
+        reason: _ExplorationReason,
+        *,
+        level: int,
+        thought: str | None = None,
+    ) -> None:
+        """Record a vertical continuation decision at ``level``."""
+        self._record_exploration_decision(
+            axis="vertical",
+            action=action,
+            reason=reason,
+            level=level,
+            thought=thought,
+        )
+
     @classmethod
     def _profile_overlap_limit(cls, exploration: str) -> float:
         return cls._ADAPTIVE_PROFILE_OVERLAP_LIMITS[exploration]
@@ -1068,6 +1244,153 @@ class ThoughtGraphEngine:
     @classmethod
     def _profile_branch_overlap_limit(cls, exploration: str) -> float:
         return cls._ADAPTIVE_BRANCH_OVERLAP_LIMITS[exploration]
+
+    @classmethod
+    def _profile_relevance_limit(cls, exploration: str) -> float:
+        return cls._ADAPTIVE_RELEVANCE_LIMITS[exploration]
+
+    @classmethod
+    def _profile_marginal_value_limit(cls, exploration: str) -> float:
+        return cls._ADAPTIVE_MARGINAL_VALUE_LIMITS[exploration]
+
+    @classmethod
+    def _is_marginally_valuable_candidate(
+        cls,
+        concept: str,
+        path: list[str],
+        candidate: str,
+        description: str | None,
+        *,
+        exploration: str,
+    ) -> bool:
+        """Require new conceptual structure before spending another call.
+
+        Novelty compares a candidate with its immediate sibling context, and
+        relevance checks whether it remains connected to the root objective.
+        This signal instead measures diminishing returns against the complete
+        accumulated branch: conceptual terms already established by the root
+        and ancestors provide less marginal value, while procedural/detail
+        terms provide only a small residual signal. It is intentionally a
+        deterministic approximation; vocabulary that carries meaning without
+        lexical evidence remains subject to the existing relevance fallback.
+        """
+        root_tokens = cls._tokens(concept)
+        candidate_tokens = cls._tokens(f"{candidate} {description or ''}")
+        if not candidate_tokens:
+            return False
+
+        detail_tokens = candidate_tokens & cls._ADAPTIVE_DETAIL_TERMS
+        candidate_concepts = candidate_tokens - root_tokens - cls._ADAPTIVE_DETAIL_TERMS
+        path_tokens = set().union(*(cls._tokens(item) for item in path[1:]))
+        established_concepts = path_tokens - root_tokens - cls._ADAPTIVE_DETAIL_TERMS
+
+        # A candidate with no remaining conceptual vocabulary is a useful
+        # retained leaf, but not a reason to request another recursive level.
+        if not candidate_concepts:
+            score = 0.15 if detail_tokens else 0.0
+        else:
+            new_concepts = candidate_concepts - established_concepts
+            conceptual_gain = len(new_concepts) / len(candidate_concepts)
+            non_detail_signal = 1.0 - (
+                len(detail_tokens) / len(candidate_tokens)
+            )
+            # Repeated conceptual vocabulary is the diminishing-return signal;
+            # this is not a depth cutoff and does not penalize new deep roles.
+            score = 0.75 * conceptual_gain + 0.25 * non_detail_signal
+
+            current_is_procedural = bool(
+                candidate_tokens & cls._ADAPTIVE_PROCEDURAL_TERMS
+            )
+            prior_procedural_levels = sum(
+                bool(cls._tokens(item) & cls._ADAPTIVE_PROCEDURAL_TERMS)
+                for item in path[1:]
+            )
+            if current_is_procedural and prior_procedural_levels >= 1:
+                # Repeated procedural decomposition tends to turn a useful
+                # branch into implementation minutiae. Keep the first such
+                # levels available, but make continued recursion earn more
+                # value; rich remains able to pursue one additional layer.
+                score *= 0.45
+                if prior_procedural_levels >= 2:
+                    score *= 0.45
+
+        return score >= cls._profile_marginal_value_limit(exploration)
+
+    @classmethod
+    def _is_relevant_candidate(
+        cls,
+        concept: str,
+        path: list[str],
+        candidate: str,
+        description: str | None,
+        *,
+        exploration: str,
+    ) -> bool:
+        """Require enough root-goal evidence before recursively expanding.
+
+        This is intentionally a provider-neutral marginal-value heuristic,
+        not a semantic classifier. Candidate names and descriptions provide
+        direct goal evidence; parent/ancestor overlap provides continuity;
+        and a growing suffix of path items without root evidence discounts
+        locally coherent but increasingly unanchored branches.
+
+        A path with no lexical anchor to the concept is treated as uncertain,
+        rather than irrelevant. This preserves valid branches whose vocabulary
+        is genuinely different while documenting the limitation of a
+        deterministic lexical signal.
+        """
+        candidate_name_tokens = cls._tokens(candidate)
+        candidate_content_tokens = cls._tokens(
+            f"{candidate} {description or ''}"
+        )
+        concept_tokens = cls._tokens(concept)
+        if not candidate_content_tokens or not concept_tokens:
+            return False
+
+        direct_name_signal = cls._token_overlap(candidate_name_tokens, concept_tokens)
+        direct_content_signal = cls._token_overlap(
+            candidate_content_tokens, concept_tokens
+        )
+        direct_signal = max(direct_name_signal, direct_content_signal)
+
+        ancestor_names = path[1:]
+        if not ancestor_names:
+            return True
+        ancestor_tokens = [cls._tokens(ancestor) for ancestor in ancestor_names]
+        parent_signal = cls._token_overlap(
+            candidate_content_tokens, ancestor_tokens[-1]
+        )
+        ancestor_signal = max(
+            cls._token_overlap(candidate_content_tokens, tokens)
+            for tokens in ancestor_tokens
+        )
+
+        anchored = [
+            cls._token_overlap(tokens, concept_tokens) > 0
+            for tokens in ancestor_tokens
+        ]
+        if direct_signal == 0.0 and not any(anchored):
+            return True
+
+        if direct_signal > 0.0:
+            score = (
+                0.65 * direct_signal + 0.25 * parent_signal + 0.10 * ancestor_signal
+            )
+        else:
+            unanchored_suffix = 0
+            for is_anchored in reversed(anchored):
+                if is_anchored:
+                    break
+                unanchored_suffix += 1
+            continuity = max(parent_signal, ancestor_signal)
+            if unanchored_suffix <= 1:
+                # Permit one vocabulary transition away from a root-anchored
+                # branch; later transitions must earn their continuation.
+                score = 0.50 + 0.30 * continuity
+            else:
+                score = 0.35 * continuity / unanchored_suffix
+
+        return score >= cls._profile_relevance_limit(exploration)
 
     @classmethod
     def _is_meaningful_candidate(
@@ -1111,7 +1434,9 @@ class ThoughtGraphEngine:
         """Return generated child-level depth using the public graph meaning."""
         if not node.children:
             return 0
-        return 1 + max(ThoughtGraphEngine._graph_depth(child) for child in node.children)
+        return 1 + max(
+            ThoughtGraphEngine._graph_depth(child) for child in node.children
+        )
 
     @staticmethod
     def _require_exploration_profile(value: str) -> str:
@@ -1147,6 +1472,7 @@ class ThoughtGraphEngine:
             vertical_child_limit: Internal maximum number of children retained
                 for each vertical expansion.
             model: Optional provider-specific model override.
+            progression_type: Semantic relationship used for generated children.
 
         Notes:
             This method mutates ``node.children`` in place. Each node expanded
@@ -1158,7 +1484,7 @@ class ThoughtGraphEngine:
             concept,
             node.name,
             max_details=vertical_child_limit,
-            max_tokens=1056,
+            max_tokens=_DEFAULT_MAX_TOKENS,
             model=model,
             progression_type=progression_type,
         )
@@ -1186,7 +1512,7 @@ class ThoughtGraphEngine:
         max_tokens: int,
         model: str | None,
         progression_type: ProgressionType = ProgressionType.IMPLEMENTATION_STEPS,
-    ):
+    ) -> ThoughtJSONModel:
         """Generate the typed vertical-expansion result for one subtopic.
 
         This helper validates the façade arguments and translates them into a
@@ -1197,7 +1523,9 @@ class ThoughtGraphEngine:
             concept: Root concept that constrains the expansion.
             subtopic: Parent thought to expand.
             max_details: Maximum number of direct children to request.
+            max_tokens: Maximum number of provider response tokens.
             model: Optional provider-specific model override.
+            progression_type: Semantic relationship used for generated children.
 
         Returns:
             The typed vertical-expansion result returned by ``expand``.

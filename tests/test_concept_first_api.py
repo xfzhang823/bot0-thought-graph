@@ -40,10 +40,14 @@ VERTICAL_ONE_CHILD = (
 )
 
 
-def horizontal_response(name):
+def horizontal_response(*names):
+    thoughts = ",".join(
+        f'{{"thought":"{name}","description":"A direction"}}'
+        for name in names
+    )
     return (
         '{"idea":"Clinical research recruitment","thoughts":['
-        f'{{"thought":"{name}","description":"A direction"}}]}}'
+        f"{thoughts}]}}"
     )
 
 
@@ -140,7 +144,8 @@ def test_structured_array_and_graph_are_public_typed_results_without_persistence
     assert list(tmp_path.iterdir()) == []
 
     provider = FakeProvider([HORIZONTAL, VERTICAL, VERTICAL, VERTICAL])
-    graph = ThoughtGraphEngine(provider).generate_thought_graph(
+    engine = ThoughtGraphEngine(provider)
+    graph = engine.generate_thought_graph(
         "Clinical research recruitment", depth=2, breadth=2
     )
     assert isinstance(graph, ThoughtGraph)
@@ -348,7 +353,7 @@ def test_progression_type_remains_vertical_only_with_new_bounds():
 
 def adaptive_responses(horizontal_names, vertical_responses):
     return (
-        [horizontal_response(name) for name in horizontal_names]
+        [horizontal_response(*horizontal_names)]
         + list(vertical_responses)
     )
 
@@ -380,6 +385,8 @@ def test_default_adaptive_mode_is_balanced_and_records_stop_reasons():
             "depth_limit",
             "insufficient_distinctness",
             "insufficient_novelty",
+            "insufficient_relevance",
+            "insufficient_marginal_value",
             "internal_candidate_limit",
             "materially_distinct",
             "meaningful_children",
@@ -389,6 +396,229 @@ def test_default_adaptive_mode_is_balanced_and_records_stop_reasons():
         }
         for decision in engine.last_exploration_trace
     )
+
+
+def test_adaptive_marginal_value_retains_novel_relevant_leaf_without_expanding():
+    provider = FakeProvider(
+        adaptive_responses(
+            ["Recruitment channels", "Recruitment channels"],
+            [
+                vertical_response("Referral tracking"),
+                '{"idea":"Participant recruitment","thought":"parent",'
+                '"sub_thoughts":[{"name":"Referral status handling",'
+                '"description":"Handle recruitment referral status"}]}',
+            ],
+        )
+    )
+    engine = ThoughtGraphEngine(provider)
+    graph = engine.generate_thought_graph(
+        "Participant recruitment", exploration="balanced"
+    )
+
+    branch = graph.root.children[0]
+    assert [child.name for child in branch.children] == ["Referral tracking"]
+    assert [child.name for child in branch.children[0].children] == [
+        "Referral status handling"
+    ]
+    assert branch.children[0].children[0].children == []
+    assert len(provider.requests) == 3
+    assert any(
+        decision.reason == "insufficient_marginal_value"
+        and decision.action == "retain"
+        and decision.thought == "Referral status handling"
+        for decision in engine.last_exploration_trace
+    )
+
+
+def test_adaptive_marginal_value_allows_new_deep_conceptual_roles():
+    provider = FakeProvider(
+        adaptive_responses(
+            ["Recruitment channels", "Recruitment channels"],
+            [
+                vertical_response("Community partnerships"),
+                '{"idea":"Participant recruitment","thought":"parent",'
+                '"sub_thoughts":[{"name":"Neurology clinics",'
+                '"description":"Recruitment through clinical partners"}]}',
+                '{"idea":"Participant recruitment","thought":"parent",'
+                '"sub_thoughts":[{"name":"Hospital outreach",'
+                '"description":"Recruitment outreach to hospital partners"}]}',
+                vertical_response(),
+            ],
+        )
+    )
+    engine = ThoughtGraphEngine(provider)
+    graph = engine.generate_thought_graph(
+        "Participant recruitment", exploration="balanced"
+    )
+
+    assert graph.depth == 4
+    assert len(provider.requests) == 5
+
+
+def test_adaptive_marginal_value_profiles_are_monotonic():
+    call_counts = []
+    for profile in ("focused", "balanced", "rich"):
+        provider = FakeProvider(
+            adaptive_responses(
+                ["Recruitment channels", "Recruitment channels"],
+                [
+                    vertical_response("Community outreach"),
+                    '{"idea":"Participant recruitment","thought":"parent",'
+                    '"sub_thoughts":[{"name":"Planning logistics",'
+                    '"description":"Community outreach planning for accessibility"}]}',
+                    '{"idea":"Participant recruitment","thought":"parent",'
+                    '"sub_thoughts":[{"name":"Scheduling calendar",'
+                    '"description":"Community outreach scheduling"}]}',
+                    vertical_response(),
+                ],
+            )
+        )
+        engine = ThoughtGraphEngine(provider)
+        engine.generate_thought_graph(
+            "Participant recruitment", exploration=profile
+        )
+        call_counts.append(len(provider.requests))
+
+    assert call_counts[0] <= call_counts[1] <= call_counts[2]
+    assert call_counts[0] < call_counts[2]
+
+
+def test_adaptive_vertical_requests_use_smaller_private_batch():
+    provider = FakeProvider(
+        adaptive_responses(
+            ["Architecture", "Architecture"],
+            [vertical_response()],
+        )
+    )
+    ThoughtGraphEngine(provider).generate_thought_graph(
+        "Clinical research recruitment", exploration="balanced"
+    )
+
+    assert "exactly 4" in provider.requests[1].prompt
+    assert "exactly 7" not in provider.requests[1].prompt
+
+
+def test_adaptive_horizontal_batches_admit_useful_candidates_before_saturation():
+    provider = FakeProvider(
+        adaptive_responses(
+            ["Architecture", "Operations", "Architecture"],
+            [vertical_response(), vertical_response()],
+        )
+    )
+    engine = ThoughtGraphEngine(provider)
+    graph = engine.generate_thought_graph(
+        "Clinical research recruitment", exploration="balanced"
+    )
+
+    assert [child.name for child in graph.root.children] == [
+        "Architecture",
+        "Operations",
+    ]
+    assert len(provider.requests) == 3
+    assert "exactly 3" in provider.requests[0].prompt
+    assert any(
+        decision.axis == "horizontal"
+        and decision.action == "skip"
+        and decision.reason == "insufficient_distinctness"
+        for decision in engine.last_exploration_trace
+    )
+
+
+def test_adaptive_horizontal_underfilled_batch_does_not_retry_single_candidates():
+    provider = FakeProvider(
+        [
+            horizontal_response("Architecture"),
+            vertical_response(),
+        ]
+    )
+    graph = ThoughtGraphEngine(provider).generate_thought_graph(
+        "Clinical research recruitment", exploration="balanced"
+    )
+
+    assert len(graph.root.children) == 1
+    assert len(provider.requests) == 2
+
+
+def test_adaptive_batch_reduction_reduces_retained_nodes(monkeypatch):
+    def terminal_response(count):
+        children = ",".join(
+            f'{{"name":"done-{index}","description":"Terminal"}}'
+            for index in range(count)
+        )
+        return (
+            '{"idea":"Clinical research recruitment","thought":"parent",'
+            f'"sub_thoughts":[{children}]}}'
+        )
+
+    new_provider = FakeProvider(
+        adaptive_responses(
+            ["Architecture", "Architecture"],
+            [terminal_response(4)],
+        )
+    )
+    new_graph = ThoughtGraphEngine(new_provider).generate_thought_graph(
+        "Clinical research recruitment", exploration="balanced"
+    )
+
+    monkeypatch.setattr(ThoughtGraphEngine, "_ADAPTIVE_VERTICAL_CHILDREN", 7)
+    old_provider = FakeProvider(
+        adaptive_responses(
+            ["Architecture", "Architecture"],
+            [terminal_response(7)],
+        )
+    )
+    old_graph = ThoughtGraphEngine(old_provider).generate_thought_graph(
+        "Clinical research recruitment", exploration="balanced"
+    )
+
+    def count(node):
+        return 1 + sum(count(child) for child in node.children)
+
+    assert "exactly 4" in new_provider.requests[1].prompt
+    assert "exactly 7" in old_provider.requests[1].prompt
+    assert count(new_graph.root) < count(old_graph.root)
+    assert len(new_provider.requests) == len(old_provider.requests) == 2
+
+
+def test_adaptive_batch_reduction_reduces_recursive_branch_calls(monkeypatch):
+    new_provider = FakeProvider(
+        adaptive_responses(
+            ["Architecture", "Architecture"],
+            [vertical_response("branch-a", "branch-b", "branch-c", "branch-d")]
+            + [vertical_response()] * 4,
+        )
+    )
+    new_graph = ThoughtGraphEngine(new_provider).generate_thought_graph(
+        "Clinical research recruitment", exploration="balanced"
+    )
+
+    monkeypatch.setattr(ThoughtGraphEngine, "_ADAPTIVE_VERTICAL_CHILDREN", 7)
+    old_provider = FakeProvider(
+        adaptive_responses(
+            ["Architecture", "Architecture"],
+            [
+                vertical_response(
+                    "branch-a",
+                    "branch-b",
+                    "branch-c",
+                    "branch-d",
+                    "branch-e",
+                    "branch-f",
+                    "branch-g",
+                )
+            ]
+            + [vertical_response()] * 7,
+        )
+    )
+    old_graph = ThoughtGraphEngine(old_provider).generate_thought_graph(
+        "Clinical research recruitment", exploration="balanced"
+    )
+
+    def count(node):
+        return 1 + sum(count(child) for child in node.children)
+
+    assert len(new_provider.requests) < len(old_provider.requests)
+    assert count(new_graph.root) < count(old_graph.root)
 
 
 def test_adaptive_profiles_are_monotonic_for_horizontal_continuation():
@@ -409,10 +639,10 @@ def test_adaptive_profiles_are_monotonic_for_horizontal_continuation():
             ],
         ),
     ]:
-        provider = FakeProvider(
-            [horizontal_response(name) for name in horizontal_names]
-            + [vertical_response()] * 3
-        )
+        horizontal_batches = [horizontal_response(*horizontal_names)]
+        if profile == "rich":
+            horizontal_batches.append(horizontal_response("Architecture design strategy"))
+        provider = FakeProvider(horizontal_batches + [vertical_response()] * 3)
         engine = ThoughtGraphEngine(provider)
         graph = engine.generate_thought_graph(
             "Clinical research recruitment", exploration=profile
@@ -426,13 +656,128 @@ def test_adaptive_profiles_are_monotonic_for_horizontal_continuation():
     assert counts[0] <= counts[1] <= counts[2]
 
 
+def test_adaptive_relevance_keeps_context_but_stops_drifting_descendants():
+    provider = FakeProvider(
+        adaptive_responses(
+            ["Participant eligibility", "Participant eligibility"],
+            [
+                vertical_response("Medical safety exclusions"),
+                vertical_response("Equipment"),
+                vertical_response("Firmware installation"),
+            ],
+        )
+    )
+    engine = ThoughtGraphEngine(provider)
+    graph = engine.generate_thought_graph(
+        "Participant recruitment", exploration="balanced"
+    )
+
+    assert [child.name for child in graph.root.children[0].children] == [
+        "Medical safety exclusions"
+    ]
+    assert [
+        child.name for child in graph.root.children[0].children[0].children
+    ] == ["Equipment"]
+    assert [
+        child.name
+        for child in graph.root.children[0].children[0].children[0].children
+    ] == ["Firmware installation"]
+    assert graph.root.children[0].children[0].children[0].children[0].children == []
+    assert any(
+        decision.reason == "insufficient_relevance"
+        and decision.thought == "Firmware installation"
+        for decision in engine.last_exploration_trace
+    )
+
+
+def test_adaptive_relevance_uses_descriptions_for_weak_root_vocabulary():
+    provider = FakeProvider(
+        adaptive_responses(
+            ["Participant eligibility", "Participant eligibility"],
+            [
+                '{"idea":"Participant recruitment","thought":"parent",'
+                '"sub_thoughts":[{"name":"Enrollment workflow",'
+                '"description":"Supports participant recruitment through outreach"}]}',
+                '{"idea":"Participant recruitment","thought":"parent",'
+                '"sub_thoughts":[{"name":"Consent logistics",'
+                '"description":"Supports participant recruitment and enrollment"}]}',
+                vertical_response(),
+            ],
+        )
+    )
+    engine = ThoughtGraphEngine(provider)
+    graph = engine.generate_thought_graph(
+        "Participant recruitment", exploration="balanced"
+    )
+
+    assert graph.depth == 3
+
+
+def test_adaptive_relevance_profiles_change_overall_continuation():
+    responses = [
+        "Participant eligibility",
+        "Participant eligibility",
+        "Medical safety exclusions",
+        "Equipment",
+        '{"idea":"Participant recruitment","thought":"parent",'
+            '"sub_thoughts":[{"name":"Devices",'
+            '"description":"Equipment"}]}',
+        vertical_response("Firmware installation"),
+    ]
+    call_counts = []
+    for profile in ("focused", "balanced", "rich"):
+        provider = FakeProvider(
+            [
+                horizontal_response(responses[0], responses[1]),
+                vertical_response(responses[2]),
+                vertical_response(responses[3]),
+                responses[4],
+                responses[5],
+            ]
+        )
+        engine = ThoughtGraphEngine(provider)
+        engine.generate_thought_graph(
+            "Participant recruitment", exploration=profile
+        )
+        call_counts.append(len(provider.requests))
+
+    assert call_counts[0] < call_counts[1] <= call_counts[2]
+
+
+def test_root_word_overlap_alone_is_not_sufficient_relevance():
+    provider = FakeProvider(
+        adaptive_responses(
+            ["Participant eligibility", "Participant eligibility"],
+            [
+                vertical_response("Recruitment"),
+                vertical_response("Firmware installation"),
+                vertical_response("Firmware setup"),
+                vertical_response("Device drivers"),
+            ],
+        )
+    )
+    engine = ThoughtGraphEngine(provider)
+    graph = engine.generate_thought_graph(
+        "Participant recruitment for a post-stroke gait rehabilitation study",
+        exploration="focused",
+    )
+
+    assert [child.name for child in graph.root.children[0].children] == [
+        "Recruitment"
+    ]
+    assert graph.root.children[0].children[0].children == []
+    assert any(
+        decision.reason == "branch_pruned" and decision.thought == "Recruitment"
+        for decision in engine.last_exploration_trace
+    )
+
+
 def test_adaptive_profiles_are_monotonic_for_vertical_continuation():
     depths = []
     for profile in ("focused", "balanced", "rich"):
         provider = FakeProvider(
             [
-                horizontal_response("Architecture"),
-                horizontal_response("Architecture"),
+                horizontal_response("Architecture", "Architecture"),
                 vertical_response("Architecture design"),
                 vertical_response("Architecture design strategy"),
                 vertical_response(),
@@ -472,7 +817,7 @@ def test_adaptive_retains_pruned_children_but_only_expands_useful_branches():
         "Architecture design",
         "Operations",
     ]
-    assert len(provider.requests) == 4
+    assert len(provider.requests) == 3
     assert any(
         decision.reason == "branch_pruned"
         and decision.action == "retain"
@@ -538,7 +883,10 @@ def test_adaptive_call_budget_returns_partial_graph_with_safety_trace(monkeypatc
         "Clinical research recruitment", exploration="balanced"
     )
 
-    assert [child.name for child in graph.root.children] == ["Architecture"]
+    assert [child.name for child in graph.root.children] == [
+        "Architecture",
+        "Operations",
+    ]
     assert any(decision.reason == "call_budget" for decision in engine.last_exploration_trace)
 
 
@@ -672,8 +1020,7 @@ def test_adaptive_low_lexical_overlap_is_not_claimed_as_semantic_duplicate():
 def test_adaptive_repeated_vertical_descendant_stops_the_branch():
     provider = FakeProvider(
         [
-            horizontal_response("Architecture"),
-            horizontal_response("Architecture"),
+            horizontal_response("Architecture", "Architecture"),
             vertical_response("Architecture design"),
             vertical_response("Architecture design"),
         ]
@@ -693,8 +1040,7 @@ def test_adaptive_repeated_vertical_descendant_stops_the_branch():
 def test_adaptive_vertical_stops_at_natural_endpoint():
     provider = FakeProvider(
         [
-            horizontal_response("Architecture"),
-            horizontal_response("Architecture"),
+            horizontal_response("Architecture", "Architecture"),
             vertical_response("Final summary"),
         ]
     )
@@ -707,19 +1053,18 @@ def test_adaptive_vertical_stops_at_natural_endpoint():
 
     assert graph.depth == 2
     assert "Progression type:" not in provider.requests[0].prompt
-    assert 'Progression type: "prerequisite_dependency"' in provider.requests[2].prompt
+    assert 'Progression type: "prerequisite_dependency"' in provider.requests[1].prompt
     assert any(
         decision.reason == "natural_endpoint"
         for decision in engine.last_exploration_trace
     )
-    assert len(provider.requests) == 3
+    assert len(provider.requests) == 2
 
 
 def test_endpoint_terms_are_supporting_signals_not_keyword_only_stops():
     provider = FakeProvider(
         [
-            horizontal_response("Architecture"),
-            horizontal_response("Architecture"),
+            horizontal_response("Architecture", "Architecture"),
             vertical_response("Summary metrics"),
             vertical_response(),
         ]
@@ -730,7 +1075,7 @@ def test_endpoint_terms_are_supporting_signals_not_keyword_only_stops():
     )
 
     assert graph.depth == 2
-    assert len(provider.requests) == 4
+    assert len(provider.requests) == 3
     assert any(
         decision.reason == "no_children"
         for decision in engine.last_exploration_trace
@@ -745,9 +1090,7 @@ def test_endpoint_terms_are_supporting_signals_not_keyword_only_stops():
 def test_adaptive_branches_can_stop_at_different_depths():
     provider = FakeProvider(
         [
-            horizontal_response("Architecture"),
-            horizontal_response("Operations"),
-            horizontal_response("Architecture"),
+            horizontal_response("Architecture", "Operations", "Architecture"),
             vertical_response(),
             vertical_response("Operations execution"),
             vertical_response(),
@@ -777,7 +1120,11 @@ def test_adaptive_horizontal_guard_is_internal_and_profile_independent():
         "Outcomes",
     ]
     provider = FakeProvider(
-        [horizontal_response(name) for name in horizontal_names]
+        [
+            horizontal_response(*horizontal_names[:3]),
+            horizontal_response(*horizontal_names[3:6]),
+            horizontal_response(*horizontal_names[6:]),
+        ]
         + [vertical_response()] * 8
     )
     engine = ThoughtGraphEngine(provider)
@@ -794,7 +1141,7 @@ def test_adaptive_horizontal_guard_is_internal_and_profile_independent():
 
 def test_adaptive_vertical_guard_stops_at_the_internal_depth_limit():
     provider = FakeProvider(
-        [horizontal_response("Architecture"), horizontal_response("Architecture")]
+        [horizontal_response("Architecture", "Architecture")]
         + [vertical_response(f"Level {index}") for index in range(1, 8)]
     )
     engine = ThoughtGraphEngine(provider)
