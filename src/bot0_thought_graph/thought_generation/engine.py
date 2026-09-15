@@ -1,12 +1,18 @@
 """Public provider-injected thought-generation engine."""
 
+# This module intentionally houses the public compatibility façade and the
+# stateful adaptive traversal. Keep these exemptions local rather than
+# weakening repository-wide lint rules; splitting either surface would risk
+# changing the existing request and traversal behavior.
+# pylint: disable=too-many-lines,too-many-instance-attributes,too-many-arguments
+# pylint: disable=too-many-locals,too-many-branches
+
 from dataclasses import dataclass
 from enum import Enum
 import re
 from typing import Any
 
 from bot0_thought_graph.models import (
-    IdeaClusterJSONModel,
     IdeaJSONModel,
     IndexedIdeaJSONModel,
     ProgressionType,
