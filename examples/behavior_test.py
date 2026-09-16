@@ -20,11 +20,18 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
 from bot0_thought_graph import ProgressionType, ThoughtGraphEngine
-from bot0_thought_graph.providers import GenerationRequest, GenerationResult, create_provider
+from bot0_thought_graph.providers import (
+    GenerationRequest,
+    GenerationResult,
+    create_provider,
+    default_model,
+)
+from bot0_thought_graph.thought_generation.parsing import extract_json
 
 try:
     from .support import FakeProvider
@@ -56,10 +63,34 @@ class CountingProvider:
     def __init__(self, provider):
         self.provider = provider
         self.requests: list[GenerationRequest] = []
+        self.decomposition_records: list[dict] = []
 
     def generate(self, request: GenerationRequest) -> GenerationResult:
         self.requests.append(request)
-        return self.provider.generate(request)
+        result = self.provider.generate(request)
+        if "Decide whether each retained thought" in request.prompt:
+            candidates = [
+                {
+                    "id": candidate_id,
+                    "thought": thought,
+                    "description": description,
+                }
+                for candidate_id, thought, description in re.findall(
+                    r"- id: ([^\n]+)\n  thought: ([^\n]+)\n  description: ([^\n]*)",
+                    request.prompt,
+                )
+            ]
+            ancestor_line = re.search(r"^ancestor_path: (.+)$", request.prompt, re.MULTILINE)
+            self.decomposition_records.append(
+                {
+                    "ancestor_path": (
+                        ancestor_line.group(1).split(" -> ") if ancestor_line else []
+                    ),
+                    "candidates": candidates,
+                    "result": extract_json(result.text),
+                }
+            )
+        return result
 
 
 def _env_default(name: str, fallback: str) -> str:
@@ -240,9 +271,13 @@ def main(argv: list[str] | None = None) -> None:
     """
     config = resolve_config(argv)
     provider = CountingProvider(build_provider(config))
+    resolved_model = (
+        config.model
+        or (default_model(config.provider) if config.provider != "fake" else "example-model")
+    )
     engine = ThoughtGraphEngine(
         provider=provider,
-        model=config.model or "example-model",
+        model=resolved_model,
     )
     if config.exploration:
         graph = engine.generate_thought_graph(
@@ -293,6 +328,10 @@ def main(argv: list[str] | None = None) -> None:
         "decomposition_terminal_count": trace_reasons.get("decomposition_terminal", 0),
         "decomposition_fallback_count": trace_reasons.get("decomposition_fallback", 0),
         "stop_reasons": trace_reasons,
+        "decomposition_evidence": [
+            {**record, "profile": config.exploration}
+            for record in provider.decomposition_records
+        ],
         "tree": tree_data(graph.root),
     }
 
