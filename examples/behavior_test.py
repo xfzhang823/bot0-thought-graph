@@ -21,9 +21,15 @@ import argparse
 import json
 import os
 from dataclasses import dataclass
+from pathlib import Path
 
 from bot0_thought_graph import ProgressionType, ThoughtGraphEngine
-from support import FakeProvider
+from bot0_thought_graph.providers import GenerationRequest, GenerationResult, create_provider
+
+try:
+    from .support import FakeProvider
+except ImportError:  # pragma: no cover - direct script execution
+    from support import FakeProvider
 
 DEFAULT_TOPIC = "clinical research participant recruitment"
 DEFAULT_PROVIDER = "openai"
@@ -40,6 +46,20 @@ class RuntimeConfig:
     depth: int
     breadth: int
     progression_type: ProgressionType
+    exploration: str | None
+    output: str | None
+
+
+class CountingProvider:
+    """Transparent provider wrapper used only to collect behavior metrics."""
+
+    def __init__(self, provider):
+        self.provider = provider
+        self.requests: list[GenerationRequest] = []
+
+    def generate(self, request: GenerationRequest) -> GenerationResult:
+        self.requests.append(request)
+        return self.provider.generate(request)
 
 
 def _env_default(name: str, fallback: str) -> str:
@@ -53,6 +73,19 @@ def _env_optional(name: str) -> str | None:
         return None
     stripped = value.strip()
     return stripped or None
+
+
+def parse_deepseek_thinking() -> bool | None:
+    """Parse the optional DeepSeek thinking-mode harness setting."""
+    value = os.getenv("DEEPSEEK_THINKING")
+    if value is None:
+        return None
+    normalized = value.strip().lower()
+    if normalized == "enabled":
+        return True
+    if normalized == "disabled":
+        return False
+    raise ValueError("Use 'enabled' or 'disabled' for DEEPSEEK_THINKING")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -96,6 +129,17 @@ def build_parser() -> argparse.ArgumentParser:
         choices=[item.value for item in ProgressionType],
         help="Vertical progression type for graph expansion.",
     )
+    parser.add_argument(
+        "--exploration",
+        choices=["focused", "balanced", "rich"],
+        default=_env_optional("BEHAVIOR_TEST_EXPLORATION"),
+        help="Run adaptive exploration with the selected semantic profile.",
+    )
+    parser.add_argument(
+        "--output",
+        default=_env_optional("BEHAVIOR_TEST_OUTPUT"),
+        help="Optional JSON path for the graph and behavior metrics.",
+    )
     return parser
 
 
@@ -108,6 +152,8 @@ def resolve_config(argv: list[str] | None = None) -> RuntimeConfig:
         depth=args.depth,
         breadth=args.breadth,
         progression_type=ProgressionType(args.progression),
+        exploration=args.exploration,
+        output=args.output,
     )
 
 
@@ -146,7 +192,7 @@ def build_provider(config: RuntimeConfig):
         return FakeProvider(
             _fake_response_sequence(config.topic, config.depth, config.breadth)
         )
-    return config.provider
+    return create_provider(config.provider)
 
 
 def print_header(config: RuntimeConfig, resolved_model: str) -> None:
@@ -156,8 +202,11 @@ def print_header(config: RuntimeConfig, resolved_model: str) -> None:
     print(f"Topic:        {config.topic}")
     print(f"Provider:     {config.provider}")
     print(f"Model:        {resolved_model}")
-    print(f"Depth:        {config.depth}")
-    print(f"Breadth:      {config.breadth}")
+    if config.exploration:
+        print(f"Exploration:  {config.exploration}")
+    else:
+        print(f"Depth:        {config.depth}")
+        print(f"Breadth:      {config.breadth}")
     print(f"Progression:  {config.progression_type.value}")
     print()
 
@@ -190,19 +239,73 @@ def main(argv: list[str] | None = None) -> None:
         ```
     """
     config = resolve_config(argv)
+    provider = CountingProvider(build_provider(config))
     engine = ThoughtGraphEngine(
-        provider=build_provider(config),
+        provider=provider,
         model=config.model or "example-model",
     )
-    graph = engine.generate_thought_graph(
-        topic=config.topic,
-        depth=config.depth,
-        breadth=config.breadth,
-        progression_type=config.progression_type,
-    )
+    if config.exploration:
+        graph = engine.generate_thought_graph(
+            topic=config.topic,
+            exploration=config.exploration,
+            progression_type=config.progression_type,
+        )
+    else:
+        graph = engine.generate_thought_graph(
+            topic=config.topic,
+            depth=config.depth,
+            breadth=config.breadth,
+            progression_type=config.progression_type,
+        )
+
+    def count_nodes(node):
+        return 1 + sum(count_nodes(child) for child in node.children)
+
+    def tree_data(node):
+        return {
+            "name": node.name,
+            "description": node.description,
+            "children": [tree_data(child) for child in node.children],
+        }
+
+    trace_reasons = {}
+    for decision in engine.last_exploration_trace:
+        reason = decision.reason.value
+        trace_reasons[reason] = trace_reasons.get(reason, 0) + 1
+    metrics = {
+        "concept": config.topic,
+        "profile": config.exploration,
+        "provider": config.provider,
+        "model": engine.model,
+        "maximum_depth": engine._graph_depth(graph.root),
+        "retained_nodes": count_nodes(graph.root) - 1,
+        "expanded_nodes": sum(
+            1
+            for request in provider.requests
+            if "vertically expanding one subtopic" in request.prompt
+        ),
+        "total_provider_calls": len(provider.requests),
+        "decomposition_evaluation_calls": sum(
+            1
+            for request in provider.requests
+            if "Decide whether each retained thought" in request.prompt
+        ),
+        "decomposition_terminal_count": trace_reasons.get("decomposition_terminal", 0),
+        "decomposition_fallback_count": trace_reasons.get("decomposition_fallback", 0),
+        "stop_reasons": trace_reasons,
+        "tree": tree_data(graph.root),
+    }
 
     print_header(config, engine.model)
     print_tree(graph.root, is_root=True)
+    print()
+    print("Metrics:")
+    print(json.dumps({key: value for key, value in metrics.items() if key != "tree"}, indent=2))
+    if config.output:
+        output_path = Path(config.output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(json.dumps(metrics, indent=2) + "\n", encoding="utf-8")
+        print(f"Persisted:    {output_path}")
 
 
 if __name__ == "__main__":
