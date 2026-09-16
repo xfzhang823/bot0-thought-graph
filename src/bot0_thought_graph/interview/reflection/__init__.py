@@ -7,6 +7,23 @@ level.
 """
 
 from .answer_evaluation import EvaluationService
+from .decomposition import (
+    DecompositionCandidate,
+    DecompositionDecision,
+    DecompositionEvaluationRequest,
+    DecompositionEvaluationResult,
+    DecompositionEvaluationService,
+    DecompositionEvaluator,
+)
 from .policy import ReflectionService
 
-__all__ = ["EvaluationService", "ReflectionService"]
+__all__ = [
+    "DecompositionCandidate",
+    "DecompositionDecision",
+    "DecompositionEvaluationRequest",
+    "DecompositionEvaluationResult",
+    "DecompositionEvaluationService",
+    "DecompositionEvaluator",
+    "EvaluationService",
+    "ReflectionService",
+]
