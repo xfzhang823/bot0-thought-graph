@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+import json
+import re
 
 import pytest
 
@@ -16,6 +18,24 @@ class FakeProvider:
 
     def generate(self, request: GenerationRequest) -> GenerationResult:
         self.requests.append(request)
+        if "Decide whether each retained thought" in request.prompt:
+            ids = re.findall(r"- id: ([^\n]+)", request.prompt)
+            return GenerationResult(
+                json.dumps(
+                    {
+                        "decisions": [
+                            {
+                                "candidate_id": candidate_id,
+                                "decompose": True,
+                                "reason": "test fallback-compatible continuation",
+                            }
+                            for candidate_id in ids
+                        ]
+                    }
+                ),
+                "fake",
+                request.model,
+            )
         return GenerationResult(self.responses.pop(0), "fake", request.model)
 
 
@@ -421,7 +441,7 @@ def test_adaptive_marginal_value_retains_novel_relevant_leaf_without_expanding()
         "Referral status handling"
     ]
     assert branch.children[0].children[0].children == []
-    assert len(provider.requests) == 3
+    assert len(provider.requests) == 4
     assert any(
         decision.reason == "insufficient_marginal_value"
         and decision.action == "retain"
@@ -452,7 +472,7 @@ def test_adaptive_marginal_value_allows_new_deep_conceptual_roles():
     )
 
     assert graph.depth == 4
-    assert len(provider.requests) == 5
+    assert len(provider.requests) == 8
 
 
 def test_adaptive_marginal_value_profiles_are_monotonic():
@@ -817,7 +837,7 @@ def test_adaptive_retains_pruned_children_but_only_expands_useful_branches():
         "Architecture design",
         "Operations",
     ]
-    assert len(provider.requests) == 3
+    assert len(provider.requests) == 4
     assert any(
         decision.reason == "branch_pruned"
         and decision.action == "retain"
@@ -1075,7 +1095,7 @@ def test_endpoint_terms_are_supporting_signals_not_keyword_only_stops():
     )
 
     assert graph.depth == 2
-    assert len(provider.requests) == 3
+    assert len(provider.requests) == 4
     assert any(
         decision.reason == "no_children"
         for decision in engine.last_exploration_trace

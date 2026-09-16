@@ -130,6 +130,8 @@ class _ExplorationReason(str, Enum):
     INSUFFICIENT_NOVELTY = "insufficient_novelty"
     INSUFFICIENT_RELEVANCE = "insufficient_relevance"
     INSUFFICIENT_MARGINAL_VALUE = "insufficient_marginal_value"
+    DECOMPOSITION_FALLBACK = "decomposition_fallback"
+    DECOMPOSITION_TERMINAL = "decomposition_terminal"
     INTERNAL_CANDIDATE_LIMIT = "internal_candidate_limit"
     MATERIAL_DISTINCT = "materially_distinct"
     MEANINGFUL_CHILDREN = "meaningful_children"
@@ -1083,6 +1085,8 @@ class ThoughtGraphEngine:
             level=level,
             thought=node.name,
         )
+        eligible_children: list[ThoughtNode] = []
+        eligible_candidates = []
         for child in node.children:
             if self._adaptive_safety_stopped:
                 break
@@ -1135,6 +1139,30 @@ class ThoughtGraphEngine:
                     thought=child.name,
                 )
                 continue
+            eligible_children.append(child)
+            eligible_candidates.append((f"child-{len(eligible_children)}", child))
+
+        if not eligible_children:
+            return
+
+        decisions = self._evaluate_adaptive_decomposition(
+            path=path,
+            candidates=eligible_candidates,
+            exploration=exploration,
+            level=level + 1,
+            model=model,
+        )
+        for candidate_id, child in eligible_candidates:
+            if self._adaptive_safety_stopped:
+                break
+            if decisions.get(candidate_id, True) is False:
+                self._record_vertical(
+                    "retain",
+                    _ExplorationReason.DECOMPOSITION_TERMINAL,
+                    level=level + 1,
+                    thought=child.name,
+                )
+                continue
             self._expand_adaptive_node(
                 child,
                 concept,
@@ -1145,6 +1173,66 @@ class ThoughtGraphEngine:
                 progression_type=progression_type,
             )
 
+    def _evaluate_adaptive_decomposition(
+        self,
+        *,
+        path: list[str],
+        candidates: list[tuple[str, ThoughtNode]],
+        exploration: str,
+        level: int,
+        model: str | None,
+    ) -> dict[str, bool]:
+        """Batch-evaluate eligible children, falling back to current heuristics."""
+        if not self._consume_adaptive_provider_call(level=level, thought=path[-1]):
+            for _, child in candidates:
+                self._record_vertical(
+                    "retain",
+                    _ExplorationReason.DECOMPOSITION_FALLBACK,
+                    level=level,
+                    thought=child.name,
+                )
+            return {candidate_id: True for candidate_id, _ in candidates}
+
+        try:
+            from bot0_thought_graph.interview.reflection import (
+                DecompositionCandidate,
+                DecompositionEvaluationRequest,
+                DecompositionEvaluationService,
+            )
+
+            result = DecompositionEvaluationService(
+                self.provider,
+                model=model or self.model,
+                max_tokens=_DEFAULT_MAX_TOKENS,
+            ).evaluate(
+                DecompositionEvaluationRequest(
+                    ancestor_path=tuple(path),
+                    candidates=tuple(
+                        DecompositionCandidate(
+                            id=candidate_id,
+                            thought=child.name,
+                            description=child.description,
+                        )
+                        for candidate_id, child in candidates
+                    ),
+                    exploration=exploration,
+                )
+            )
+        except Exception:
+            for _, child in candidates:
+                self._record_vertical(
+                    "continue",
+                    _ExplorationReason.DECOMPOSITION_FALLBACK,
+                    level=level,
+                    thought=child.name,
+                )
+            return {candidate_id: True for candidate_id, _ in candidates}
+
+        return {
+            decision.candidate_id: decision.decompose
+            for decision in result.decisions
+        }
+
     def _start_adaptive_run(self) -> None:
         """Reset run-local adaptive counters; explicit mode never consumes them."""
         self._adaptive_provider_calls = 0
@@ -1154,6 +1242,23 @@ class ThoughtGraphEngine:
 
     def _consume_adaptive_work(self, *, level: int, thought: str | None = None) -> bool:
         """Reserve one provider call and expansion attempt before doing work."""
+        if not self._consume_adaptive_provider_call(level=level, thought=thought):
+            return False
+        if self._adaptive_expansion_attempts >= self._ADAPTIVE_MAX_EXPANSIONS:
+            self._adaptive_provider_calls -= 1
+            self._record_safety_stop(
+                _ExplorationReason.EXPANSION_BUDGET,
+                level=level,
+                thought=thought,
+            )
+            return False
+        self._adaptive_expansion_attempts += 1
+        return True
+
+    def _consume_adaptive_provider_call(
+        self, *, level: int, thought: str | None = None
+    ) -> bool:
+        """Reserve one provider call under the shared adaptive call budget."""
         if self._adaptive_safety_stopped:
             return False
         if self._adaptive_provider_calls >= self._ADAPTIVE_MAX_PROVIDER_CALLS:
@@ -1163,15 +1268,7 @@ class ThoughtGraphEngine:
                 thought=thought,
             )
             return False
-        if self._adaptive_expansion_attempts >= self._ADAPTIVE_MAX_EXPANSIONS:
-            self._record_safety_stop(
-                _ExplorationReason.EXPANSION_BUDGET,
-                level=level,
-                thought=thought,
-            )
-            return False
         self._adaptive_provider_calls += 1
-        self._adaptive_expansion_attempts += 1
         return True
 
     def _record_safety_stop(
