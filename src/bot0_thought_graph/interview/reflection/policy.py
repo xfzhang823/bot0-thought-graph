@@ -1,12 +1,12 @@
-"""Deterministic reflection and next-action decisions."""
+"""Deterministic reflection and next-action policy."""
 
 from bot0_thought_graph.models import EvaluationCriteria
 
-from .models import ReflectionDecision
+from ..models import ReflectionDecision
 
 
 class ReflectionService:
-    """Separate policy decisions from provider-generated evaluation."""
+    """Apply interview next-action policy to an answer evaluation."""
 
     def __init__(self, correctness_threshold: float = 4.5) -> None:
         self.correctness_threshold = correctness_threshold

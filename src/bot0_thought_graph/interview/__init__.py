@@ -1,7 +1,7 @@
 """Public provider-injected interview services."""
 
 from .engine import InterviewEngine
-from .evaluation import EvaluationService
+from .reflection import EvaluationService, ReflectionService
 from .models import (
     InterviewContext,
     InterviewSession,
@@ -11,7 +11,6 @@ from .models import (
     SessionMetadata,
 )
 from .question_generation import QuestionGenerationService
-from .reflection import ReflectionService
 from .state import has_current_sub_thought, next_location
 from .topic_exhaustion import ConversationMetrics, TopicExhaustionPolicy
 

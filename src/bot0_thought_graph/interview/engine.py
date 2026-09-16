@@ -7,10 +7,9 @@ from bot0_thought_graph.providers import LLMProvider
 from bot0_thought_graph.storage import Repository
 from bot0_thought_graph.thought_generation import index_idea
 
-from .evaluation import EvaluationService
 from .models import InterviewContext, InterviewSession, InterviewTurn, InterviewTurnResult
 from .question_generation import QuestionGenerationService
-from .reflection import ReflectionService
+from .reflection import EvaluationService, ReflectionService
 from .state import has_current_sub_thought, next_location
 from .topic_exhaustion import TopicExhaustionPolicy
 
