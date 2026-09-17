@@ -87,6 +87,8 @@ backend/src/testing.py
 input_output/
 thought_generation/*_output/
 logs/
+.running_services
+examples/results/
 
 # Platform-specific accidental paths
 C:/github/

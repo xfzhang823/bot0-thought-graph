@@ -2,7 +2,7 @@
 
 **Version 0.1.0** · Python ≥ 3.12 · Pre-1.0: the documented core API is intended for reuse, but minor releases may still refine interfaces before 1.0.
 
-`bot0-thought-graph` is a standalone Python package for reusable complex-topic disaggregation and structured thought generation. It keeps provider access and persistence behind explicit caller-supplied interfaces: the package never constructs SDK clients implicitly, never writes files unless you call `save`, and has no import-time network or filesystem behavior.
+`bot0-thought-graph` is a standalone Python package for reusable complex-topic disaggregation and structured thought generation. It keeps persistence behind explicit caller-supplied interfaces: it makes no provider requests or automatic writes during import, and only constructs a provider client when generation is requested through the configured API.
 
 ## Capabilities
 
@@ -18,11 +18,13 @@ Requires Python 3.12 or newer.
 
 ```bash
 uv add bot0-thought-graph
-# Provider adapters are optional (adds openai / anthropic SDKs + python-dotenv):
+# Optional provider extras remain available for compatibility with existing installs:
 uv add "bot0-thought-graph[providers]"
 ```
 
-The core package depends only on `pandas>=2.2` and `pydantic>=2.9`. Provider SDK imports are lazy — `import bot0_thought_graph` works without any SDK installed; importing an adapter from `bot0_thought_graph.providers` requires the `providers` extra.
+The published package declares `pandas`, `pydantic`, `openai`, and `anthropic`
+as runtime dependencies. Provider adapter modules are still imported lazily;
+the root import does not construct SDK clients or make provider requests.
 
 For a checkout:
 
@@ -226,10 +228,9 @@ repository. A separate consuming application/package may own those workflows.
 ```bash
 uv sync --extra providers --extra dev
 uv run python -m compileall src
-uv run pytest           # testpaths=tests, pythonpath=src (legacy tests included)
+uv run pytest           # testpaths=tests, pythonpath=src
 uv build
 ```
 
-- Package-focused tests exercise the `bot0_thought_graph` graph, reflection, model, provider, storage, and boundary surfaces; retained legacy tests cover separate application modules.
-- No SDK, network, or `.env` is required to run the package tests — they use fake providers.
-- The package is import-clean: no import-time dotenv loading, provider construction, network access, or file writes (verified by `tests/test_package_hygiene.py` and the v0.1.0 release-readiness audit).
+- Tests exercise the canonical graph, reflection, model, provider, storage, and package-boundary surfaces. Generation tests use fake or injected providers and make no network requests.
+- The package root is import-clean: it does not construct provider clients or make network requests. Provider-module import may load a repository `.env` file without overriding existing environment variables.
