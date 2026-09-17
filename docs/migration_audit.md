@@ -2,7 +2,11 @@
 
 ## Final package boundary
 
-`src/bot0_thought_graph/` now contains the reusable deterministic models and prompts, provider-neutral contracts and lazy SDK adapters, optional storage, thought-generation engine, headless interview engine, and thin orchestration. It has no imports from legacy `agents`, `pipelines`, `utils`, `project_config`, `input_output`, frontend, VoiceAssist, FastAPI, or terminal code.
+> Historical snapshot: the interview engine and legacy top-level source
+> surfaces described below were subsequently retired. See
+> `docs/architecture/legacy_src_retirement_audit.md` for the retirement record.
+
+`src/bot0_thought_graph/` contains the reusable deterministic models and prompts, provider-neutral contracts and lazy SDK adapters, optional storage, and thought-generation engine. It has no imports from legacy application code.
 
 ## Intentional semantic differences
 

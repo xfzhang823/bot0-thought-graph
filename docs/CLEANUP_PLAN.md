@@ -1,5 +1,8 @@
 # Cleanup Plan — bot0-thought-graph
 
+> Historical cleanup plan: subsequent legacy source retirement completed the
+> deferred legacy-scope work described in this document.
+
 ## Scope and Method
 
 - Date: 2026-08-08. Every item below was verified against the live working tree (grep / read / git / directory listings) — no assumptions.

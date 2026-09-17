@@ -221,7 +221,9 @@ Frontend, FastAPI, WebSocket, voice/audio, TTS, terminal interaction, deployment
 
 🔥 **Breaking change (v0.1.0)**: the former `VoiceAssist/` prototype was extracted to the separate `voice-assist` repository and the legacy React frontend was removed from the repository. Neither is part of this package or supported as part of `bot0-thought-graph`; future voice work belongs in separate projects such as `voice-tools` and `bot0-voice-assistant`.
 
-Legacy application modules (`src/agents`, `src/pipelines`, `src/models`, the `interviewagent*.py` scripts, etc.) remain in the repository for compatibility and deferred migration. They are not package dependencies, are excluded from the wheel (`setuptools` discovery is restricted to `bot0_thought_graph*`), and are not documented here. Interview/conversational workflows are outside the `bot0_thought_graph` package boundary and belong in a separate consuming application/package.
+Legacy application modules and interview/conversational workflows are outside
+the `bot0_thought_graph` package boundary and have been retired from this
+repository. A separate consuming application/package may own those workflows.
 
 ## Development
 

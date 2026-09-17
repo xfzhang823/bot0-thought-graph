@@ -15,16 +15,8 @@ from bot0_thought_graph.prompts import (
     QUESTION_ANSWER_EVAL_PROMPT,
     THOUGHT_GENERATION_PROMPT,
 )
-from models.evaluation_models import EvaluationCriteria as LegacyEvaluationCriteria
-from models.thought_models import IdeaJSONModel as LegacyIdeaJSONModel
-from prompts.thought_generation_prompt_templates import (
-    THOUGHT_GENERATION_PROMPT as LegacyThoughtGenerationPrompt,
-)
 
-
-def test_package_models_are_public_and_legacy_models_are_compatible():
-    assert LegacyIdeaJSONModel is IdeaJSONModel
-    assert LegacyEvaluationCriteria is EvaluationCriteria
+def test_package_models_are_public():
     assert TextResponse(content="hello").model_dump() == {"content": "hello"}
 
 
@@ -78,7 +70,6 @@ def test_evaluation_validation_and_question_answer_defaults():
 
 
 def test_prompt_exports_and_rendering():
-    assert LegacyThoughtGenerationPrompt is THOUGHT_GENERATION_PROMPT
     rendered = THOUGHT_GENERATION_PROMPT.format(idea="AI", num_sub_thoughts=3)
     assert '"idea": "AI"' in rendered
     assert "{num_sub_thoughts}" not in rendered

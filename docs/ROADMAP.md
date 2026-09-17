@@ -1,5 +1,9 @@
 # Roadmap — bot0-thought-graph
 
+> Historical roadmap: the legacy source layer referenced below was retired in
+> the final legacy architecture cleanup. The canonical package is now the only
+> supported implementation under `src/`.
+
 Status: 2026-08-10. Companion documents: `docs/MASTER_AUDIT.md` (audit) and `docs/CLEANUP_PLAN.md` (executed cleanup items).
 
 ## Completed cleanup (2026-08-07 → 2026-08-10)

@@ -399,5 +399,14 @@ canonical engine.
 
 All audited legacy directories can ultimately disappear, subject only to an
 explicit decision about unsupported/external legacy application usage and the
-migration or removal of its tests and scripts. No cleanup was performed as part
-of this audit.
+migration or removal of its tests and scripts. The cleanup described by this
+audit has now been executed.
+
+## Retirement completion note
+
+The legacy `src/agents/`, `src/models/`, `src/prompts/`, `src/pipelines/`, and
+empty `src/thought_generation/` surfaces are gone. Their legacy-only runners,
+utilities, interview helpers, and async tests were also removed. The canonical
+package was not changed in responsibility or behavior. The old
+`TopicExhaustionPolicy` was retired with its legacy facilitator rather than
+being added to the graph package.

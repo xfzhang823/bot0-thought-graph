@@ -6,6 +6,6 @@
 - **Experiments:** evaluation/comparison scripts, sandboxes, demos, and manual runners remain unvalidated experiments.
 - **Backup files:** `*_backup.py`, `*_SAVED.py`, and `*_GOLD.py` remain historical copies.
 - **Deployment-specific code:** root services, FastAPI/TTS entry points, startup scripts, authentication, terminal loops, and machine-specific configuration remain application concerns.
-- **Deferred reusable legacy code:** `src/agents/` except the topic-exhaustion compatibility shim, `src/pipelines/`, `src/utils/`, `src/project_config.py`, and legacy interview services remain untouched because they still combine application behavior, provider construction, or filesystem assumptions.
+- **Retired legacy code:** the former `src/agents/`, `src/pipelines/`, `src/utils/`, `src/project_config.py`, and legacy interview services were removed from this repository. They were application behavior, provider construction, or filesystem-oriented support rather than canonical graph functionality.
 
 No excluded surface is imported by `src/bot0_thought_graph/`. The former VoiceAssist prototype is maintained separately; no broad migration or redesign is performed here.

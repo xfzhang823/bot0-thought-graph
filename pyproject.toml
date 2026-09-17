@@ -9,7 +9,6 @@ dependencies = [
     "openai>=2.48.0",
     "pandas>=2.2",
     "pydantic>=2.9",
-    "tenacity>=9.1.4",
 ]
 
 [project.optional-dependencies]
@@ -20,7 +19,6 @@ providers = [
 ]
 dev = [
     "pytest>=8.3",
-    "pytest-asyncio>=0.24",
 ]
 
 [build-system]
@@ -34,7 +32,6 @@ include = ["bot0_thought_graph*"]
 [dependency-groups]
 dev = [
     "pytest>=8.3",
-    "pytest-asyncio>=0.24",
 ]
 
 [tool.pytest.ini_options]
