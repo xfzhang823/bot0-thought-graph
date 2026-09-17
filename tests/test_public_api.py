@@ -3,6 +3,7 @@
 import pytest
 
 import bot0_thought_graph.public_api as public_api
+from bot0_thought_graph import ProgressionType
 
 
 class _FakeEngine:
@@ -26,7 +27,7 @@ def test_root_export_is_importable():
     assert ThoughtGraphEngine is not None
 
 
-def test_root_function_delegates_topic_and_exploration(monkeypatch):
+def test_root_function_delegates_topic_exploration_provider_and_model(monkeypatch):
     monkeypatch.setattr(public_api, "ThoughtGraphEngine", _FakeEngine)
     provider = object()
 
@@ -44,6 +45,37 @@ def test_root_function_delegates_topic_and_exploration(monkeypatch):
     assert engine.calls == [{
         "topic": "hospital emergency department operations",
         "exploration": "focused",
+        "progression_type": ProgressionType.IMPLEMENTATION_STEPS,
+    }]
+
+
+def test_root_function_forwards_explicit_progression_type(monkeypatch):
+    monkeypatch.setattr(public_api, "ThoughtGraphEngine", _FakeEngine)
+    provider = object()
+
+    public_api.generate_thought_graph(
+        "hospital emergency department operations",
+        progression_type=ProgressionType.PREREQUISITE_DEPENDENCY,
+        provider=provider,
+    )
+
+    engine = _FakeEngine.instances[-1]
+    assert engine.calls == [{
+        "topic": "hospital emergency department operations",
+        "exploration": "balanced",
+        "progression_type": ProgressionType.PREREQUISITE_DEPENDENCY,
+    }]
+
+
+def test_root_function_defaults_to_implementation_steps(monkeypatch):
+    monkeypatch.setattr(public_api, "ThoughtGraphEngine", _FakeEngine)
+
+    public_api.generate_thought_graph("systems", provider="openai")
+
+    assert _FakeEngine.instances[-1].calls == [{
+        "topic": "systems",
+        "exploration": "balanced",
+        "progression_type": ProgressionType.IMPLEMENTATION_STEPS,
     }]
 
 

@@ -21,11 +21,12 @@ The package is synchronous at its public engine boundary. It has no global clien
 The preferred simple API delegates to the canonical `ThoughtGraphEngine`:
 
 ```python
-from bot0_thought_graph import generate_thought_graph
+from bot0_thought_graph import ProgressionType, generate_thought_graph
 
 graph = generate_thought_graph(
     "hospital emergency department operations",
     exploration="balanced",
+    progression_type=ProgressionType.PREREQUISITE_DEPENDENCY,
     provider="openai",
 )
 ```
@@ -33,7 +34,10 @@ graph = generate_thought_graph(
 `provider` is explicit because the package does not select an arbitrary
 provider when it is omitted. For a named provider, `model=None` uses the
 existing provider default and `<PROVIDER>_MODEL` environment override. The
-returned object is the canonical `ThoughtGraph`.
+optional `progression_type` selects the semantic relationship used by vertical
+child generation; it defaults to `ProgressionType.IMPLEMENTATION_STEPS` and
+does not affect horizontal generation or exploration shape. The returned
+object is the canonical `ThoughtGraph`.
 
 For advanced controls, use the existing `ThoughtGraphEngine` façade:
 

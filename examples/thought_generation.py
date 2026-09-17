@@ -4,7 +4,7 @@ import json
 
 from support import FakeProvider
 
-from bot0_thought_graph import ThoughtGraphEngine, generate_thought_graph
+from bot0_thought_graph import ProgressionType, ThoughtGraphEngine, generate_thought_graph
 
 
 HORIZONTAL = (
@@ -44,6 +44,7 @@ simple_provider = FakeProvider([
 simple_graph = generate_thought_graph(
     "systems",
     exploration="balanced",
+    progression_type=ProgressionType.PREREQUISITE_DEPENDENCY,
     provider=simple_provider,
     model="example-model",
 )

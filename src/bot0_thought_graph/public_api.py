@@ -1,6 +1,6 @@
 """Small convenience functions for normal package consumers."""
 
-from bot0_thought_graph.models import ThoughtGraph
+from bot0_thought_graph.models import ProgressionType, ThoughtGraph
 from bot0_thought_graph.providers import LLMProvider
 from bot0_thought_graph.thought_generation import ThoughtGraphEngine
 
@@ -9,6 +9,7 @@ def generate_thought_graph(
     topic: str,
     *,
     exploration: str = "balanced",
+    progression_type: ProgressionType = ProgressionType.IMPLEMENTATION_STEPS,
     provider: LLMProvider | str | None = None,
     model: str | None = None,
 ) -> ThoughtGraph:
@@ -18,6 +19,8 @@ def generate_thought_graph(
     provider-selection setting.  When ``provider`` is a provider name, the
     existing engine/provider architecture resolves its default model and any
     ``<PROVIDER>_MODEL`` environment override when ``model`` is omitted.
+    ``progression_type`` selects the semantic relationship used for vertical
+    child generation and is forwarded to the canonical engine unchanged.
     """
     if provider is None:
         raise ValueError(
@@ -26,7 +29,11 @@ def generate_thought_graph(
         )
 
     engine = ThoughtGraphEngine(provider, model=model)
-    return engine.generate_thought_graph(topic=topic, exploration=exploration)
+    return engine.generate_thought_graph(
+        topic=topic,
+        exploration=exploration,
+        progression_type=progression_type,
+    )
 
 
 __all__ = ["generate_thought_graph"]

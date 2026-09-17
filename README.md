@@ -41,16 +41,17 @@ uv sync
 The simplest external workflow uses the root-level convenience function. Pass a provider name (or an injected `LLMProvider`); when a named provider is used, omitting `model` uses the existing provider default and `<PROVIDER>_MODEL` environment override:
 
 ```python
-from bot0_thought_graph import generate_thought_graph
+from bot0_thought_graph import ProgressionType, generate_thought_graph
 
 graph = generate_thought_graph(
     "hospital emergency department operations",
     exploration="balanced",
+    progression_type=ProgressionType.PREREQUISITE_DEPENDENCY,
     provider="deepseek",
 )
 ```
 
-Provider selection is explicit because the package does not choose an arbitrary provider when none is configured. Use `ThoughtGraphEngine` directly when you need shape bounds, ranking, progression controls, persistence, or other advanced options.
+Provider selection is explicit because the package does not choose an arbitrary provider when none is configured. The optional `progression_type` selects the semantic relationship between vertically generated parent and child thoughts; it defaults to `ProgressionType.IMPLEMENTATION_STEPS` and does not change exploration shape. Use `ThoughtGraphEngine` directly when you need shape bounds, ranking, persistence, or other advanced options.
 
 The supported provider names are `openai`, `gemini`, `deepseek`, and `anthropic`. Use `model=None` to select the package default; a `<PROVIDER>_MODEL` environment variable takes precedence. `horizontal` is the maximum number of root-level peer directions retained. `vertical` is the maximum number of generated child levels beneath the root. `vertical=1` returns the root plus its first horizontal layer, and `vertical=2` adds one vertical expansion beneath that layer. Explicit `horizontal` and `vertical` values are independent; the horizontal value is not reused as the vertical child count. The legacy `depth` and `breadth` arguments remain supported for compatibility and cannot be mixed with the new arguments. The façade supports legacy `depth` values through 3 and new `vertical` values through `MAX_FACADE_DEPTH` (currently eight child levels). The existing `concept=` parameter remains supported as an alias for `topic=`.
 
