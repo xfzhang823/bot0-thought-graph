@@ -3,7 +3,7 @@ name = "bot0-thought-graph"
 version = "0.1.0"
 description = "Reusable LLM-powered complex-topic disaggregation and thought graphs"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 dependencies = [
     "anthropic>=0.120.0",
     "openai>=2.48.0",

@@ -1,14 +1,11 @@
 """Public provider-injected thought-generation API."""
 
-from .engine import (
-    HorizontalGenerationRequest,
-    ThoughtGraphEngine,
-    VerticalGenerationRequest,
-)
+from .engine import ThoughtGraphEngine
 from bot0_thought_graph.models import ProgressionType, Thought, ThoughtArray, ThoughtGraph, ThoughtNode
 from .indexing import index_idea
 from .parsing import extract_json
 from .reader import IndexedThoughtReader, ThoughtReader
+from .requests import HorizontalGenerationRequest, VerticalGenerationRequest
 from .validation import parse_idea, parse_thought, validate_idea, validate_indexed_idea
 
 __all__ = [

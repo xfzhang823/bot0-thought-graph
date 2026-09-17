@@ -54,8 +54,10 @@ def test_interview_namespace_is_not_available():
 
 
 def test_thought_generation_has_no_interview_reflection_import():
-    engine_source = (
-        ROOT / "src" / "bot0_thought_graph" / "thought_generation" / "engine.py"
-    ).read_text(encoding="utf-8")
-    assert "bot0_thought_graph.interview.reflection" not in engine_source
-    assert "bot0_thought_graph.reflection" in engine_source
+    thought_generation = ROOT / "src" / "bot0_thought_graph" / "thought_generation"
+    source = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in thought_generation.rglob("*.py")
+    )
+    assert "bot0_thought_graph.interview.reflection" not in source
+    assert "bot0_thought_graph.reflection" in source

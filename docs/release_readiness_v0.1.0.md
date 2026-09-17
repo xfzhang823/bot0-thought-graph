@@ -44,7 +44,7 @@ Models, requests, policies, repository contracts, provider contracts, and option
 
 ## Packaging findings
 
-`pyproject.toml` uses a `src` layout, declares project name `bot0-thought-graph`, version `0.1.0`, Python `>=3.12`, core dependencies `pandas>=2.2` and `pydantic>=2.9`, optional provider dependencies `anthropic` and `openai`, and pytest development dependencies. Setuptools package discovery includes only `bot0_thought_graph*`.
+`pyproject.toml` uses a `src` layout, declares project name `bot0-thought-graph`, version `0.1.0`, Python `>=3.10`, core dependencies `pandas>=2.2` and `pydantic>=2.9`, optional provider dependencies `anthropic` and `openai`, and pytest development dependencies. Setuptools package discovery includes only `bot0_thought_graph*`.
 
 The README is configured as project metadata. No license file or license metadata was present; selecting and adding licensing is an owner decision and remains optional for this audit.
 

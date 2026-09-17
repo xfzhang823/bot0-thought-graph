@@ -1,6 +1,6 @@
 # bot0-thought-graph
 
-**Version 0.1.0** · Python ≥ 3.12 · Pre-1.0: the documented core API is intended for reuse, but minor releases may still refine interfaces before 1.0.
+**Version 0.1.0** · Python ≥ 3.10 · Pre-1.0: the documented core API is intended for reuse, but minor releases may still refine interfaces before 1.0.
 
 `bot0-thought-graph` is a standalone Python package for reusable complex-topic disaggregation and structured thought generation. It keeps persistence behind explicit caller-supplied interfaces: it makes no provider requests or automatic writes during import, and only constructs a provider client when generation is requested through the configured API.
 
@@ -14,7 +14,11 @@
 
 ## Installation
 
-Requires Python 3.12 or newer.
+Requires Python 3.10 or newer.
+
+Python support is declared in the package metadata and lockfile as `>=3.10`.
+The test suite is currently validated on Python 3.12; the repository does not
+yet define a multi-version CI matrix.
 
 ```bash
 uv add bot0-thought-graph
