@@ -1,7 +1,7 @@
 [project]
 name = "bot0-thought-graph"
 version = "0.1.0"
-description = "Reusable LLM-powered thought generation and interview pipelines"
+description = "Reusable LLM-powered complex-topic disaggregation and thought graphs"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -19,6 +19,7 @@ providers = [
 ]
 dev = [
     "pytest>=8.3",
+    "pytest-asyncio>=1.0",
 ]
 
 [build-system]
@@ -32,6 +33,7 @@ include = ["bot0_thought_graph*"]
 [dependency-groups]
 dev = [
     "pytest>=8.3",
+    "pytest-asyncio>=1.0",
 ]
 
 [tool.pytest.ini_options]

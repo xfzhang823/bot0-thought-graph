@@ -2,6 +2,7 @@
 
 The stable top-level entry points are:
 
+- `generate_thought_graph` for the normal complex-topic disaggregation workflow.
 - `ThoughtGraphEngine` for concept-first horizontal subtopics, vertical expansion, bounded thought graphs, named-provider or provider-injected generation, indexing, and explicit saving.
 - `Thought`, `ThoughtArray`, `ThoughtNode`, and `ThoughtGraph` as the structured concept-first result models, plus the `ProgressionType` vertical-progression enum.
 - `LLMProvider` and `AsyncLLMProvider` protocols for custom providers.
@@ -17,7 +18,24 @@ The package is synchronous at its public engine boundary. It has no global clien
 
 ## External consumer workflow
 
-The canonical external API is the existing `ThoughtGraphEngine` façade:
+The preferred simple API delegates to the canonical `ThoughtGraphEngine`:
+
+```python
+from bot0_thought_graph import generate_thought_graph
+
+graph = generate_thought_graph(
+    "hospital emergency department operations",
+    exploration="balanced",
+    provider="openai",
+)
+```
+
+`provider` is explicit because the package does not select an arbitrary
+provider when it is omitted. For a named provider, `model=None` uses the
+existing provider default and `<PROVIDER>_MODEL` environment override. The
+returned object is the canonical `ThoughtGraph`.
+
+For advanced controls, use the existing `ThoughtGraphEngine` façade:
 
 ```python
 from bot0_thought_graph import ThoughtGraphEngine

@@ -4,7 +4,7 @@ import json
 
 from support import FakeProvider
 
-from bot0_thought_graph import ThoughtGraphEngine
+from bot0_thought_graph import ThoughtGraphEngine, generate_thought_graph
 
 
 HORIZONTAL = (
@@ -34,3 +34,18 @@ print("thought_array:")
 print(thought_array.model_dump_json(indent=2))
 print("thought_graph:")
 print(json.dumps(graph.model_dump(), indent=2))
+
+# The root-level convenience API delegates to the same canonical engine.
+simple_provider = FakeProvider([
+    '{"idea":"systems","thoughts":[{"thought":"hardware",'
+    '"description":"Physical design"}]}',
+    '{"idea":"systems","thought":"hardware","sub_thoughts":[]}',
+])
+simple_graph = generate_thought_graph(
+    "systems",
+    exploration="balanced",
+    provider=simple_provider,
+    model="example-model",
+)
+print("simple thought_graph:")
+print(json.dumps(simple_graph.model_dump(), indent=2))

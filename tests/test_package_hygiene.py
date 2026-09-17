@@ -13,6 +13,7 @@ def test_public_top_level_api_is_small_and_importable():
     namespace = {}
     exec("from bot0_thought_graph import *", namespace)
     assert {
+        "generate_thought_graph",
         "ThoughtGraphEngine",
         "LLMProvider",
         "AsyncLLMProvider",
@@ -41,7 +42,10 @@ def test_import_works_outside_repository_without_sdk_adapter_imports(tmp_path):
         [
             sys.executable,
             "-c",
-            "import bot0_thought_graph; import bot0_thought_graph.providers; print('ok')",
+            "import sys; import bot0_thought_graph; "
+            "assert hasattr(bot0_thought_graph, 'generate_thought_graph'); "
+            "assert 'bot0_thought_graph.interview' not in sys.modules; "
+            "import bot0_thought_graph.providers; print('ok')",
         ],
         cwd=tmp_path,
         env=env,

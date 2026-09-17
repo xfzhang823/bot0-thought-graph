@@ -2,14 +2,13 @@
 
 **Version 0.1.0** · Python ≥ 3.12 · Pre-1.0: the documented core API is intended for reuse, but minor releases may still refine interfaces before 1.0.
 
-`bot0-thought-graph` is a standalone Python package for structured thought generation and headless interviewing. It keeps provider access and persistence behind explicit caller-supplied interfaces: the package never constructs SDK clients implicitly, never writes files unless you call `save`, and has no import-time network or filesystem behavior.
+`bot0-thought-graph` is a standalone Python package for reusable complex-topic disaggregation and structured thought generation. It keeps provider access and persistence behind explicit caller-supplied interfaces: the package never constructs SDK clients implicitly, never writes files unless you call `save`, and has no import-time network or filesystem behavior.
 
 ## Capabilities
 
-- ✨ **Concept-first façade** — `ThoughtGraphEngine.generate_subtopics()`, `expand_subtopic()`, `generate_array_of_thoughts()`, and `generate_thought_graph()` turn one concept into sibling-level subtopics, vertical detail expansions, and bounded hierarchies.
+- ✨ **Concept-first façade** — `generate_thought_graph()` is the simple entry point for turning one topic into a structured hierarchy. `ThoughtGraphEngine` remains available for advanced/configurable generation.
 - Horizontal and vertical thought generation with an optional clustering/ranking pass (`ranked=True` or `num_clusters`/`top_n`).
 - Deterministic indexing, parsing, validation, and hierarchy traversal — no provider calls involved.
-- Typed interview sessions with question generation, answer evaluation, reflection, and a deterministic topic-exhaustion policy.
 - ✨ **Four provider adapters** — OpenAI, Anthropic, Google Gemini, and DeepSeek — each with sync and async variants behind one `LLMProvider` protocol.
 - Optional in-memory or caller-selected JSON persistence (`MemoryRepository`, `JsonRepository`).
 
@@ -33,22 +32,19 @@ uv sync
 
 ## Concept-first usage
 
-The simplest external workflow uses the existing `ThoughtGraphEngine` façade with a provider name. Provider adapters do not need to be imported manually:
+The simplest external workflow uses the root-level convenience function. Pass a provider name (or an injected `LLMProvider`); when a named provider is used, omitting `model` uses the existing provider default and `<PROVIDER>_MODEL` environment override:
 
 ```python
-from bot0_thought_graph import ThoughtGraphEngine
+from bot0_thought_graph import generate_thought_graph
 
-generator = ThoughtGraphEngine(
+graph = generate_thought_graph(
+    "hospital emergency department operations",
+    exploration="balanced",
     provider="deepseek",
-    model="deepseek-v4-flash",
-)
-
-graph = generator.generate_thought_graph(
-    topic="clinical research participant recruitment",
-    horizontal=2,
-    vertical=8,
 )
 ```
+
+Provider selection is explicit because the package does not choose an arbitrary provider when none is configured. Use `ThoughtGraphEngine` directly when you need shape bounds, ranking, progression controls, persistence, or other advanced options.
 
 The supported provider names are `openai`, `gemini`, `deepseek`, and `anthropic`. Use `model=None` to select the package default; a `<PROVIDER>_MODEL` environment variable takes precedence. `horizontal` is the maximum number of root-level peer directions retained. `vertical` is the maximum number of generated child levels beneath the root. `vertical=1` returns the root plus its first horizontal layer, and `vertical=2` adds one vertical expansion beneath that layer. Explicit `horizontal` and `vertical` values are independent; the horizontal value is not reused as the vertical child count. The legacy `depth` and `breadth` arguments remain supported for compatibility and cannot be mixed with the new arguments. The façade supports legacy `depth` values through 3 and new `vertical` values through `MAX_FACADE_DEPTH` (currently eight child levels). The existing `concept=` parameter remains supported as an alias for `topic=`.
 
