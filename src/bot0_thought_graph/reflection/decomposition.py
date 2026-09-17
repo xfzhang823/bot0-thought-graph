@@ -138,6 +138,4 @@ class DecompositionEvaluationService:
         return result
 
 
-# Keep the shorter evaluator name available for callers that describe the
-# capability as an evaluator rather than a service.
 DecompositionEvaluator = DecompositionEvaluationService

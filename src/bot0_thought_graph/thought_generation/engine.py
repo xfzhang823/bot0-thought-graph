@@ -1194,7 +1194,7 @@ class ThoughtGraphEngine:
             return {candidate_id: True for candidate_id, _ in candidates}
 
         try:
-            from bot0_thought_graph.interview.reflection import (
+            from bot0_thought_graph.reflection import (
                 DecompositionCandidate,
                 DecompositionEvaluationRequest,
                 DecompositionEvaluationService,

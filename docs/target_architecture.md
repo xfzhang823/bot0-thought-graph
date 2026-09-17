@@ -1,5 +1,9 @@
 # Target architecture
 
+> **Status: stale target architecture.**
+>
+> This document predates and contradicts `docs/architecture/interview_package_extraction_requirements.md`, which is authoritative for the end state. In particular, the target package layout below retains `interview/`, which the authoritative requirements remove. Do not use this document as the target for new work; see `docs/architecture/` instead.
+
 ## Purpose
 
 `bot0-thought-graph` will provide a reusable Python package for structured thought generation and guided interviewing workflows.

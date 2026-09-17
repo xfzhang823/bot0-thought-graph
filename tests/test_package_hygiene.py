@@ -14,7 +14,6 @@ def test_public_top_level_api_is_small_and_importable():
     exec("from bot0_thought_graph import *", namespace)
     assert {
         "ThoughtGraphEngine",
-        "InterviewEngine",
         "LLMProvider",
         "AsyncLLMProvider",
         "MemoryRepository",

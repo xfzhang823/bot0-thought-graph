@@ -1,5 +1,9 @@
 # bot0-thought-graph v0.1.0 release-readiness audit
 
+> Historical snapshot: this document predates Phase C interview removal. Its
+> interview-specific release claims are no longer current; see
+> `docs/public_api.md` for the current graph-package boundary.
+
 ## Executive conclusion
 
 The reusable `bot0_thought_graph` package is ready for a `v0.1.0` tag. The package boundary is independent of the retained application and legacy material, the public top-level API is intentionally small, the wheel and source distribution build successfully, package-focused tests pass, all included examples run offline, and an installed wheel imports and performs a minimal offline use case outside the repository source tree.

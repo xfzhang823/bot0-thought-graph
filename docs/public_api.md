@@ -4,13 +4,14 @@ The stable top-level entry points are:
 
 - `ThoughtGraphEngine` for concept-first horizontal subtopics, vertical expansion, bounded thought graphs, named-provider or provider-injected generation, indexing, and explicit saving.
 - `Thought`, `ThoughtArray`, `ThoughtNode`, and `ThoughtGraph` as the structured concept-first result models, plus the `ProgressionType` vertical-progression enum.
-- `InterviewEngine` for typed, headless interview sessions and explicit session saving.
 - `LLMProvider` and `AsyncLLMProvider` protocols for custom providers.
 - `MemoryRepository` and `JsonRepository` for optional caller-selected persistence.
 
 Requests, models, policies, and adapter classes are available from their subpackages. Provider SDK adapters are lazy and require the `providers` extra; fake/custom providers require no SDK client construction.
 
-The package root no longer re-exports the thin interview controller/policy wrappers. They remain available from the `bot0_thought_graph.interview` and `bot0_thought_graph.orchestration` submodules for compatibility, but they are not part of the canonical top-level API.
+Interview and conversational workflows are outside this package. A future
+interview/application package may depend on the graph-generation API, graph
+models, provider contracts, storage contracts, and package-level reflection.
 
 The package is synchronous at its public engine boundary. It has no global clients, repository-root discovery, automatic persistence, or import-time network/filesystem behavior. Callers may extend it by implementing `LLMProvider` or `Repository` and injecting those objects.
 
@@ -87,7 +88,5 @@ result = engine.generate(
 
 Intentional differences from legacy application behavior:
 - Thought-engine clustering is explicit rather than hidden in every generation call.
-- Interview processing is typed and headless rather than terminal-driven.
-- The migrated interview engine is synchronous.
 - Persistence is optional and explicit.
 - Legacy facilitator retries and file-backed conversation logging are not included.

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from bot0_thought_graph.interview.reflection import (
+from bot0_thought_graph.reflection import (
     DecompositionCandidate,
     DecompositionEvaluationRequest,
     DecompositionEvaluationService,
