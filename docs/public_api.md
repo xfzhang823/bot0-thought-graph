@@ -83,6 +83,30 @@ graph = engine.generate_thought_graph(
 
 Horizontal methods produce sibling-level major dimensions. Vertical expansion produces direct, more-specific children of one subtopic. `ThoughtArray` contains the concept and typed first-level `Thought` items. `ThoughtGraph` contains the concept, a `ThoughtNode` root, and recursive child nodes. `vertical=1` means root plus first-level subtopics; `vertical=2` adds one vertical expansion under each subtopic. `horizontal` caps root-level peer directions, while explicit vertical mode uses an independent internal child cap. Graph generation performs one provider call for the horizontal expansion plus one call per expanded node and never persists implicitly.
 
+The graph therefore follows a two-stage conceptual structure: horizontal
+generation identifies broad, parallel dimensions, and vertical generation
+decomposes each dimension into more-specific children. With
+`progression_type=ProgressionType.PROBLEM_SOLUTION`, for example:
+
+```text
+Participant recruitment
+├── Recruitment strategy
+│   ├── Low awareness → targeted outreach
+│   ├── Limited referrals → clinic partnerships
+│   └── Ineffective messaging → plain-language materials
+└── Participant eligibility
+    ├── Eligibility confusion → clear screening criteria
+    └── Screening burden → a streamlined prescreening process
+```
+
+These problem-solution items are sibling thoughts under each horizontal
+dimension. `ProgressionType` describes the semantic relationship among the
+vertical children; it does not itself add tree depth or alter the horizontal
+layer. Depth is controlled separately by `depth`/`vertical` or adaptive
+exploration. In adaptive mode, `focused`, `balanced`, and `rich` control
+whether a branch continues, while `progression_type` controls the meaning of
+the children generated when it does continue.
+
 When no graph-shape bounds are supplied, `generate_thought_graph()` uses the `balanced` adaptive exploration profile. The `exploration=` argument accepts `"focused"`, `"balanced"`, or `"rich"`; profiles control continuation and stopping decisions rather than mapping to fixed breadth/depth values. Adaptive profiles cannot be combined with explicit `horizontal=`/`vertical=` or legacy `breadth=`/`depth=` arguments.
 
 Adaptive horizontal exploration probes small bounded candidate batches and

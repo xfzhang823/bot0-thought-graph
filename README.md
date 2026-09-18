@@ -26,6 +26,14 @@ uv add bot0-thought-graph
 uv add "bot0-thought-graph[providers]"
 ```
 
+With pip:
+
+```bash
+pip install bot0-thought-graph
+# Optional provider extras remain available for compatibility with existing installs:
+pip install "bot0-thought-graph[providers]"
+```
+
 The published package declares `pandas`, `pydantic`, `openai`, and `anthropic`
 as runtime dependencies. Provider adapter modules are still imported lazily;
 the root import does not construct SDK clients or make provider requests.
@@ -87,6 +95,31 @@ graph = engine.generate_thought_graph(
 `generate_subtopics()` and `generate_array_of_thoughts()` perform horizontal expansion: they return distinct major dimensions at a similar level of abstraction. `expand_subtopic()` performs one-level vertical expansion using implementation-step semantics by default. The convenience list methods return `list[str]`; structured methods return `ThoughtArray` and `ThoughtGraph`.
 
 Graph `vertical=1` returns the root concept and its first-level subtopics; `vertical=2` adds one vertical expansion under each first-level subtopic. The explicit `horizontal` value caps root-level peer directions, while vertical expansions use an internal child cap independent of horizontal breadth. The legacy `depth`/`breadth` arguments retain their previous shared-child-limit behavior. Set `ranked=True` on horizontal or graph methods to route the first-level subtopics through the clustering/ranking pipeline. The vertical methods `expand_subtopic()` and `generate_thought_graph()` accept `progression_type=` — a `ProgressionType` member or its string value — to select the semantic relationship between a parent thought and its children; both default to `ProgressionType.IMPLEMENTATION_STEPS`. These methods do not persist results.
+
+The graph is built in two conceptual stages: horizontal generation identifies
+broad, parallel dimensions of the root concept, and vertical generation makes
+each dimension more specific. For example, with
+`progression_type=ProgressionType.PROBLEM_SOLUTION`:
+
+```text
+Participant recruitment
+├── Recruitment strategy
+│   ├── Low awareness → targeted outreach
+│   ├── Limited referrals → clinic partnerships
+│   └── Ineffective messaging → plain-language materials
+└── Participant eligibility
+    ├── Eligibility confusion → clear screening criteria
+    └── Screening burden → a streamlined prescreening process
+```
+
+The problem-solution children remain sibling thoughts beneath their horizontal
+parent; the progression type does not itself create additional tree depth.
+`simple_to_complex`, `chronological`, and `prerequisite_dependency` similarly
+describe the semantic relationship among vertical children. Tree depth is
+controlled separately by `depth`/`vertical` or by adaptive exploration. In
+adaptive mode, `focused`, `balanced`, and `rich` decide whether a branch should
+continue, while `progression_type` describes the children generated when that
+branch is expanded.
 
 When no graph-shape bounds are supplied, `generate_thought_graph()` uses the `balanced` adaptive exploration profile. Callers may select `exploration="focused"`, `"balanced"`, or `"rich"` to change how readily horizontal directions and vertical branches continue. Adaptive exploration cannot be combined with `horizontal`/`vertical` or legacy `breadth`/`depth`. The profiles control continuation decisions rather than fixed graph sizes.
 

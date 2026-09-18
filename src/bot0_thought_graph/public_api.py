@@ -21,6 +21,28 @@ def generate_thought_graph(
     ``<PROVIDER>_MODEL`` environment override when ``model`` is omitted.
     ``progression_type`` selects the semantic relationship used for vertical
     child generation and is forwarded to the canonical engine unchanged.
+
+    Args:
+        topic: Root concept to disaggregate into a thought graph.
+        exploration: Adaptive continuation profile. Must be ``"focused"``,
+            ``"balanced"``, or ``"rich"``; defaults to ``"balanced"``.
+        progression_type: Semantic relationship used for vertically generated
+            children. Defaults to
+            ``ProgressionType.IMPLEMENTATION_STEPS``.
+        provider: Provider name (``"openai"``, ``"gemini"``,
+            ``"deepseek"``, or ``"anthropic"``) or an injected
+            ``LLMProvider`` instance.
+        model: Optional provider-specific model identifier. When omitted, the
+            provider's configured default model is used.
+
+    Returns:
+        A generated ``ThoughtGraph`` containing the requested root concept and
+        its horizontal and vertical thought hierarchy.
+
+    Raises:
+        ValueError: If ``provider`` is omitted or the engine rejects an
+            invalid topic, exploration profile, progression type, or provider
+            configuration.
     """
     if provider is None:
         raise ValueError(
